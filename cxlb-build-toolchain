@@ -1,0 +1,287 @@
+#!/bin/bash
+
+set -e
+
+usage() {
+    cat <<EOF
+`basename $0` [options] <compile_dir> <install_dir>
+
+  parameters:
+
+    <compile_dir> : where to download / comile gnuradio and other
+                    packages
+    <install_dir> : where to install gnuradio and other packages
+
+  options:
+
+    -s <steps> : manually select the list of steps to execute (defaults:
+                 $STEPS)
+    -p : pull latest updates from remote git repos
+    -h : this help
+
+This scripts packages gnuradio + additional gnuradio contrib packages
+
+Prior to running it you must:
+
+- purge packages:
+
+  gnuradio-* libgruel-* libgruel* libgruel0* libgnuradio*
+  python-gnuradio*
+
+- install packages:
+
+  libfontconfig1-dev libxrender-dev libpulse-dev swig g++ automake
+  autoconf libtool python-dev libfftw3-dev libcppunit-dev
+  libboost-all-dev libusb-dev libusb-1.0-0-dev fort77 libsdl1.2-dev
+  python-wxgtk2.8 git-core libqt4-dev python-numpy ccache
+  python-opengl libgsl0-dev python-cheetah python-lxml doxygen
+  qt4-dev-tools libusb-1.0-0-dev libqwt5-qt4-dev libqwtplot3d-qt4-dev
+  pyqt4-dev-tools python-qwt5-qt4 cmake git-core wget libxi-dev
+  python-docutils gtk2-engines-pixbuf r-base-dev python-tk
+  liborc-0.4-0 liborc-0.4-dev libasound2-dev python-gtk2 libportaudio2
+  portaudio19-dev ca-certificates xalan
+
+EOF
+}
+
+package_banner() {
+    # display a build banner for a package.
+    # param 1: the string to display
+    echo -e "\n------------------------------------------------------------------------\n"
+    echo -e "$@"
+    echo -e "\n------------------------------------------------------------------------\n"
+}
+
+update_git() {
+    # clone / update a git repository. Optionnaly pull from it.
+    # param 1: repository path/url
+    REPO=$1
+    DIR=$(basename "$REPO")
+    echo "### update_git from $REPO in $(readlink -f $DIR)"
+    if [ -d "$DIR" ] ; then
+        pushd "$DIR"
+        if [ $PULL -eq 0 ] ; then git pull ; fi
+        popd
+    else
+        git clone "$REPO" "$DIR"
+    fi
+}
+
+cmake_build() {
+    # configure/make/install a package.
+    # param 1: the build path
+    # remaining params: cmake options
+    BUILDDIR="$1"
+    CMAKE_OPTS="$@"
+    echo "### cmake_build in $BUILDDIR with options $COMMON_CMAKE_OPTS $CMAKE_OPTS"
+    mkdir -p "$BUILDDIR"
+    pushd "$BUILDDIR"
+    cmake $COMMON_CMAKE_OPTS $CMAKE_OPTS ../
+    make
+    make install
+    popd
+}
+
+do_step_p() {
+    # using var $STEPS, return wether a step has to be executed
+    # param 1: step name
+    # returns 0 if step needs to be executed
+    echo $STEPS | grep -q '\(\s\|^\)'$1'\(\s\|$\)'
+}
+
+PULL=1
+STEPS="uhd rtl-sdr gnuradio gr-iqbal bladeRF hackRF gr-osmosdr uhd-firmware fft-web"
+while getopts "s:ph" OPT; do
+    case $OPT in
+        s) STEPS="$OPTARG" ;;
+        p) PULL=0 ;;
+        h) usage ; exit 0 ;;
+        *) usage ; exit 1 ;;
+    esac
+done
+shift $((OPTIND-1))
+if [ $# -ne 2 ] ; then
+    usage
+    exit 1
+fi
+# args: strip trailing slash if needed (except if arg is "/")
+if [ "$1" != "/" ] ; then SOURCES_DIR="${1%/}" ; else SOURCES_DIR="$1" ; fi
+if [ "$2" != "/" ] ; then INSTALL_DIR="${2%/}" ; else INSTALL_DIR="$2" ; fi
+
+#COMMON_CMAKE_OPTS="-DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR"
+COMMON_CMAKE_OPTS="-DCMAKE_INSTALL_PREFIX=$INSTALL_DIR"
+
+SET_GNURADIO_ENV=$(cat <<EOF
+export GNURADIOPYTHONHOMEPATH="$INSTALL_DIR/"\$(python -c "import sys,os; print os.sep.join(['lib', 'python' + sys.version[:3], 'dist-packages'])")
+export PYTHONPATH="\$GNURADIOPYTHONHOMEPATH\${PYTHONPATH:+:\${PYTHONPATH}}"
+export LD_LIBRARY_PATH="$INSTALL_DIR/lib\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}"
+export PATH="$INSTALL_DIR/bin\${PATH:+:\${PATH}}"
+export MANPATH="$INSTALL_DIR/share/man:\${MANPATH}"
+EOF
+)
+
+MANUAL_OPERATIONS=""
+
+if [ ! -d "$SOURCES_DIR" ] ; then
+    mkdir -p $SOURCES_DIR
+fi
+cd $SOURCES_DIR
+
+# ------------------------------------------------------------------------
+# uhd
+# http://code.ettus.com/redmine/ettus/projects/uhd/wiki
+# http://code.ettus.com/redmine/ettus/projects/uhd/wiki/UHD_Build
+# install des dépendances
+# aptitude install libboost-all-dev libusb-1.0-0-dev python-cheetah doxygen python-docutils
+# en réalité juste libusb-1.0-0-dev
+do_step_p "uhd" && (
+    package_banner "uhd"
+    update_git git://github.com/EttusResearch/uhd.git
+    cmake_build uhd.git/host/build
+)
+
+# ------------------------------------------------------------------------
+# rtl-sdr osmocom
+# http://sdr.osmocom.org/trac/wiki/rtl-sdr
+do_step_p "rtl_sdr" && (
+    package_banner "rtl-sdr"
+    update_git git://git.osmocom.org/rtl-sdr.git
+    cmake_build rtl-sdr.git/build
+    MANUAL_OPERATIONS="${MANUAL_OPERATIONS}- copy ${SOURCES_DIR}/rtl-sdr.git/rtl-sdr.rules to /etc/udev/rules.d/\n\n"
+)
+
+# ------------------------------------------------------------------------
+# gnuradio
+# http://gnuradio.org/redmine/projects/gnuradio/wiki/InstallingGRFromSource#Installing-manually-from-source
+# http://gnuradio.org/redmine/projects/gnuradio/wiki/BuildGuide
+# http://gnuradio.org/doc/doxygen/build_guide.html
+# install des dépendances
+# aptitude install libfontconfig1-dev libxrender-dev libpulse-dev swig g++ automake autoconf libtool python-dev libfftw3-dev libcppunit-dev libboost-all-dev libusb-dev libusb-1.0-0-dev fort77 libsdl1.2-dev python-wxgtk2.8 git-core libqt4-dev python-numpy ccache python-opengl libgsl0-dev python-cheetah python-lxml doxygen qt4-dev-tools libusb-1.0-0-dev libqwt5-qt4-dev libqwtplot3d-qt4-dev pyqt4-dev-tools python-qwt5-qt4 cmake git-core wget libxi-dev python-docutils gtk2-engines-pixbuf r-base-dev python-tk liborc-0.4-0 liborc-0.4-dev libasound2-dev python-gtk2 libportaudio2 portaudio19-dev ca-certificates
+# en réalité juste libcppunit-dev fort77 libqt4-dev ccache libgsl0-dev qt4-dev-tools libqwt5-qt4-dev libqwtplot3d-qt4-dev pyqt4-dev-tools python-qwt5-qt4 r-base-dev liborc-0.4-dev portaudio19-dev
+do_step_p "gnuradio" && (
+    package_banner "gnuradio"
+    update_git http://git.gnuradio.org/git/gnuradio.git
+    ( cd gnuradio.git ; git checkout maint )
+    cmake_build gnuradio.git/build
+)
+
+# ------------------------------------------------------------------------
+# gr-iqbal
+# http://git.osmocom.org/gr-iqbal
+do_step_p "gr-iqbal" && (
+    package_banner "gr-iqbal"
+    update_git git://git.osmocom.org/gr-iqbal.git
+    ( cd gr-iqbal.git ; git submodule init ; git submodule update )
+    cmake_build gr-iqbal.git/build
+)
+
+# ------------------------------------------------------------------------
+# bladeRF
+# http://www.nuand.com/bladeRF
+do_step_p "bladeRF" && (
+    package_banner "bladeRF"
+    update_git https://github.com/Nuand/bladeRF.git
+    cmake_build bladeRF.git/host/build -DINSTALL_UDEV_RULES=OFF
+    MANUAL_OPERATIONS="${MANUAL_OPERATIONS}- copy ${SOURCES_DIR}/bladeRF.git/host/build/misc/udev/88-nuand.rules to /etc/udev/rules.d/\n\n"
+)
+
+# ------------------------------------------------------------------------
+# hackrf
+# https://github.com/mossmann/hackrf
+do_step_p "hackRF" && (
+    package_banner "hackRF"
+    update_git https://github.com/mossmann/hackrf.git
+    cmake_build hackrf.git/host/build
+    MANUAL_OPERATIONS="${MANUAL_OPERATIONS}- copy ${SOURCES_DIR}/hackrf.git/host/hackrf-tools/52-hackrf.rules to /etc/udev/rules.d/\n\n"
+)
+
+# ------------------------------------------------------------------------
+# gr-osmosdr osmocom
+# http://sdr.osmocom.org/trac/wiki/GrOsmoSDR
+do_step_p "gr-osmosdr" && (
+    package_banner "gr-osmosdr"
+    update_git git://git.osmocom.org/gr-osmosdr.git
+    cmake_build gr-osmosdr.git/build
+)
+
+# ------------------------------------------------------------------------
+# grextras
+# https://github.com/guruofquality/grextras/wiki
+# do_step_p "grextras" && (
+#     package_banner "grextras"
+#     update_git https://github.com/guruofquality/grextras.git
+#     cmake_build grextras.git/build
+# )
+
+# ------------------------------------------------------------------------
+# gr-baz
+# https://github.com/balint256/gr-baz
+# do_step_p "gr-baz" && (
+#     package_banner "gr-baz"
+#     update_git https://github.com/balint256/gr-baz.git
+#     cmake_build gr-baz.git/build
+# )
+
+# ------------------------------------------------------------------------
+# uhd firmware update
+do_step_p "uhd-firmware" && (
+    package_banner "uhd-firmware"
+    $INSTALL_DIR/lib/uhd/utils/uhd_images_downloader.py
+)
+
+# ------------------------------------------------------------------------
+# fft-web
+do_step_p "fft-web" && (
+    package_banner "fft-web"
+    update_git https://github.com/CorteXlab/fft-web.git
+    (
+        cd fft-web.git/grc
+        eval $SET_GNURADIO_ENV
+        grcc -d . fft-web.grc
+        # WARN: currently option -d does not work -> compiled .py and .py.xml go in ~/.grc_gnuradio, hence the following hack
+        cp ~/.grc_gnuradio/fft_web.py ~/.grc_gnuradio/fft_web.py.xml .
+        xalan -xsl fix_xml.xsl -param pythondir "'$GNURADIOPYTHONHOMEPATH'" < fft_web.py.xml > fft_web.py.xml.tmp
+        mv fft_web.py.xml.tmp fft_web.py.xml
+        cp fft_web.py "$GNURADIOPYTHONHOMEPATH"
+        cp fft_web.py.xml $INSTALL_DIR/share/gnuradio/grc/blocks/
+    )
+)
+
+MANUAL_OPERATIONS="${MANUAL_OPERATIONS}$(cat <<EOF
+- add group usrp
+
+- add needed users in this group
+
+- may need to reload udev rules:
+
+  $ sudo udevadm control --reload-rules
+
+- may need to set some sysctl. In /etc/sysctl.conf:
+
+  net.core.rmem_max = 1000000
+  net.core.wmem_max = 1000000
+  kernel.shmmax = 2147483648
+
+  and for immediate setting:
+
+  $ sudo sysctl -w net.core.rmem_max=1000000 >/dev/null 2>&1
+  $ sudo sysctl -w net.core.wmem_max=1000000 >/dev/null 2>&1
+  $ sudo sysctl -w kernel.shmmax=2147483648  >/dev/null 2>&1
+
+- may need rtprio for members of group usrp. In /etc/security/limits.conf:
+
+  @usrp  - rtprio 50
+
+  and logout / login to activate this
+
+- to use the packaged gnuradio you need to source the following lines:
+
+$SET_GNURADIO_ENV
+
+EOF
+)"
+
+echo -e "\n------------------------------------------------------------------------\n"
+echo -e "manual operations:\n"
+echo -e "$MANUAL_OPERATIONS"
+echo -e "\n------------------------------------------------------------------------\n"
