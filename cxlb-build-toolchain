@@ -228,7 +228,7 @@ build_step "uhd" "git://github.com/EttusResearch/uhd.git" "master" && (
 # ------------------------------------------------------------------------
 # rtl-sdr osmocom
 # http://sdr.osmocom.org/trac/wiki/rtl-sdr
-build_step "rtl_sdr" "git://git.osmocom.org/rtl-sdr.git" "master" && (
+build_step "rtl-sdr" "git://git.osmocom.org/rtl-sdr.git" "master" && (
     cmake_build rtl-sdr.git/build
     MANUAL_OPERATIONS="${MANUAL_OPERATIONS}- copy ${SOURCES_DIR}/rtl-sdr.git/rtl-sdr.rules to /etc/udev/rules.d/\n\n"
 )
