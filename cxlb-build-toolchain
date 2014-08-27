@@ -14,9 +14,15 @@ usage() {
 
   options:
 
-    -s <steps> : manually select the list of steps to execute (defaults:
+    -s <STEPS> : manually select the list of steps to execute (defaults:
                  $STEPS)
     -p : pull latest updates from remote git repos
+    -o <FILE> : output all packages versions to the bundle file <FILE>
+    -i <FILE> : checkout packages versions from bundle file <FILE>
+    -n : no build, only repository operations
+    -N : no ckeckout from bundle file nor from defaults branch heads,
+         do not touch the source repositories
+    -c : clean build dir before build
     -h : this help
 
 This scripts packages gnuradio + additional gnuradio contrib packages
@@ -52,18 +58,59 @@ package_banner() {
     echo -e "\n------------------------------------------------------------------------\n"
 }
 
+get_tag() {
+    # output to stdout the current git commit sha,
+    # or a pseudo dev commit + a display a warning on stderr if the tree was touched
+    # param 1: the git directory
+    DIR="$1"
+    pushd "$DIR" > /dev/null
+    if git diff-index --quiet HEAD ; then
+        TAG=$(git log --pretty=format:'%H' -n 1)
+    else
+        echo "ERROR: $dir working tree not commited" 1>&2
+        TAG=$(date +dev-%s)
+    fi
+    popd > /dev/null
+    echo "$TAG"
+}
+
 update_git() {
-    # clone / update a git repository. Optionnaly pull from it.
+    # clone / update a git repository.
+    # Optionnaly pull from it.
+    # by default checkout a default branch,
+    # or a specific commit if a bundle file is read
+    # if $NOCHECKOUT, no checkout performed.
+    # outputs a line if a bundle file is written
     # param 1: repository path/url
+    # param 2: the branch or commit to checkout
     REPO=$1
+    DEFAULTCHECKOUT=$2
     DIR=$(basename "$REPO")
     echo "### update_git from $REPO in $(readlink -f $DIR)"
     if [ -d "$DIR" ] ; then
-        pushd "$DIR"
+        pushd "$DIR" > /dev/null
         if [ $PULL -eq 0 ] ; then git pull ; fi
-        popd
+        popd > /dev/null
     else
         git clone "$REPO" "$DIR"
+    fi
+    if [ "$NOCHECKOUT" != "0" ] ; then
+        if [ "$BUNDLEIN" != "" ] ; then
+            pushd "$DIR" > /dev/null
+            TAG=$(sed -n "s/$DIR=\(.*\)/\1/p" "$BUNDLEIN")
+            if [ "$TAG" == "" ] ; then
+                TAG="$DEFAULTCHECKOUT"
+            fi
+            git checkout "$TAG"
+            popd > /dev/null
+        else
+            pushd "$DIR" > /dev/null
+            git checkout "$DEFAULTCHECKOUT"
+            popd > /dev/null
+        fi
+    fi
+    if [ "$BUNDLEOUT" != "" ] ; then
+        echo "$DIR="$(get_tag "$DIR") >> "$BUNDLEOUT"
     fi
 }
 
@@ -74,12 +121,15 @@ cmake_build() {
     BUILDDIR="$1"
     CMAKE_OPTS="$@"
     echo "### cmake_build in $BUILDDIR with options $COMMON_CMAKE_OPTS $CMAKE_OPTS"
+    if [ "$CLEANBUILD" == "0" ] ; then
+        rm -rf "$BUILDDIR"
+    fi
     mkdir -p "$BUILDDIR"
-    pushd "$BUILDDIR"
+    pushd "$BUILDDIR" > /dev/null
     cmake $COMMON_CMAKE_OPTS $CMAKE_OPTS ../
     make
     make install
-    popd
+    popd > /dev/null
 }
 
 do_step_p() {
@@ -89,12 +139,45 @@ do_step_p() {
     echo $STEPS | grep -q '\(\s\|^\)'$1'\(\s\|$\)'
 }
 
+step() {
+    # checks if a step needs to be performed. If yes, display a step banner and return 0
+    # param 1: step name
+    STEP="$1"
+    do_step_p "$STEP" && (
+        package_banner "$STEP"
+    )
+}
+
+build_step() {
+    # build step preamble: update git, and return 0 if the actual build has to proceed
+    # param 1: step name
+    # param 2: git repository url
+    # param 3: default branch or commit to checkout
+    STEP="$1"
+    REPOS="$2"
+    DEFAULTCHECKOUT="$3"
+    step "$STEP" && (
+        update_git "$REPOS" "$DEFAULTCHECKOUT"
+        [ "$ONLYGIT" != "0" ]
+    )
+}
+
+NOCHECKOUT=1
 PULL=1
 STEPS="uhd rtl-sdr gnuradio gr-iqbal bladeRF hackRF gr-osmosdr uhd-firmware fft-web"
-while getopts "s:ph" OPT; do
+BUNDLEOUT=""
+BUNDLEIN=""
+ONLYGIT=1
+CLEANBUILD=1
+while getopts "Nno:i:s:pch" OPT; do
     case $OPT in
+        N) NOCHECKOUT=0 ;;
+        n) ONLYGIT=0 ;;
+        o) BUNDLEOUT=$(readlink -f "$OPTARG") ;;
+        i) BUNDLEIN=$(readlink -f "$OPTARG") ;;
         s) STEPS="$OPTARG" ;;
         p) PULL=0 ;;
+        c) CLEANBUILD=0 ;;
         h) usage ; exit 0 ;;
         *) usage ; exit 1 ;;
     esac
@@ -110,6 +193,10 @@ if [ "$2" != "/" ] ; then INSTALL_DIR="${2%/}" ; else INSTALL_DIR="$2" ; fi
 
 #COMMON_CMAKE_OPTS="-DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR"
 COMMON_CMAKE_OPTS="-DCMAKE_INSTALL_PREFIX=$INSTALL_DIR"
+
+if [ "$BUNDLEOUT" != "" ] ; then
+    cat /dev/null > "$BUNDLEOUT"
+fi
 
 SET_GNURADIO_ENV=$(cat <<EOF
 export GNURADIOPYTHONHOMEPATH="$INSTALL_DIR/"\$(python -c "import sys,os; print os.sep.join(['lib', 'python' + sys.version[:3], 'dist-packages'])")
@@ -134,18 +221,14 @@ cd $SOURCES_DIR
 # install des dépendances
 # aptitude install libboost-all-dev libusb-1.0-0-dev python-cheetah doxygen python-docutils
 # en réalité juste libusb-1.0-0-dev
-do_step_p "uhd" && (
-    package_banner "uhd"
-    update_git git://github.com/EttusResearch/uhd.git
+build_step "uhd" "git://github.com/EttusResearch/uhd.git" "master" && (
     cmake_build uhd.git/host/build
 )
 
 # ------------------------------------------------------------------------
 # rtl-sdr osmocom
 # http://sdr.osmocom.org/trac/wiki/rtl-sdr
-do_step_p "rtl_sdr" && (
-    package_banner "rtl-sdr"
-    update_git git://git.osmocom.org/rtl-sdr.git
+build_step "rtl_sdr" "git://git.osmocom.org/rtl-sdr.git" "master" && (
     cmake_build rtl-sdr.git/build
     MANUAL_OPERATIONS="${MANUAL_OPERATIONS}- copy ${SOURCES_DIR}/rtl-sdr.git/rtl-sdr.rules to /etc/udev/rules.d/\n\n"
 )
@@ -158,19 +241,14 @@ do_step_p "rtl_sdr" && (
 # install des dépendances
 # aptitude install libfontconfig1-dev libxrender-dev libpulse-dev swig g++ automake autoconf libtool python-dev libfftw3-dev libcppunit-dev libboost-all-dev libusb-dev libusb-1.0-0-dev fort77 libsdl1.2-dev python-wxgtk2.8 git-core libqt4-dev python-numpy ccache python-opengl libgsl0-dev python-cheetah python-lxml doxygen qt4-dev-tools libusb-1.0-0-dev libqwt5-qt4-dev libqwtplot3d-qt4-dev pyqt4-dev-tools python-qwt5-qt4 cmake git-core wget libxi-dev python-docutils gtk2-engines-pixbuf r-base-dev python-tk liborc-0.4-0 liborc-0.4-dev libasound2-dev python-gtk2 libportaudio2 portaudio19-dev ca-certificates
 # en réalité juste libcppunit-dev fort77 libqt4-dev ccache libgsl0-dev qt4-dev-tools libqwt5-qt4-dev libqwtplot3d-qt4-dev pyqt4-dev-tools python-qwt5-qt4 r-base-dev liborc-0.4-dev portaudio19-dev
-do_step_p "gnuradio" && (
-    package_banner "gnuradio"
-    update_git http://git.gnuradio.org/git/gnuradio.git
-    ( cd gnuradio.git ; git checkout maint )
+build_step "gnuradio" "http://git.gnuradio.org/git/gnuradio.git" "maint" && (
     cmake_build gnuradio.git/build
 )
 
 # ------------------------------------------------------------------------
 # gr-iqbal
 # http://git.osmocom.org/gr-iqbal
-do_step_p "gr-iqbal" && (
-    package_banner "gr-iqbal"
-    update_git git://git.osmocom.org/gr-iqbal.git
+build_step "gr-iqbal" "git://git.osmocom.org/gr-iqbal.git" "master" && (
     ( cd gr-iqbal.git ; git submodule init ; git submodule update )
     cmake_build gr-iqbal.git/build
 )
@@ -178,9 +256,7 @@ do_step_p "gr-iqbal" && (
 # ------------------------------------------------------------------------
 # bladeRF
 # http://www.nuand.com/bladeRF
-do_step_p "bladeRF" && (
-    package_banner "bladeRF"
-    update_git https://github.com/Nuand/bladeRF.git
+build_step "bladeRF" "https://github.com/Nuand/bladeRF.git" "master" && (
     cmake_build bladeRF.git/host/build -DINSTALL_UDEV_RULES=OFF
     MANUAL_OPERATIONS="${MANUAL_OPERATIONS}- copy ${SOURCES_DIR}/bladeRF.git/host/build/misc/udev/88-nuand.rules to /etc/udev/rules.d/\n\n"
 )
@@ -188,9 +264,7 @@ do_step_p "bladeRF" && (
 # ------------------------------------------------------------------------
 # hackrf
 # https://github.com/mossmann/hackrf
-do_step_p "hackRF" && (
-    package_banner "hackRF"
-    update_git https://github.com/mossmann/hackrf.git
+build_step "hackRF" "https://github.com/mossmann/hackrf.git" "master" && (
     cmake_build hackrf.git/host/build
     MANUAL_OPERATIONS="${MANUAL_OPERATIONS}- copy ${SOURCES_DIR}/hackrf.git/host/hackrf-tools/52-hackrf.rules to /etc/udev/rules.d/\n\n"
 )
@@ -198,42 +272,33 @@ do_step_p "hackRF" && (
 # ------------------------------------------------------------------------
 # gr-osmosdr osmocom
 # http://sdr.osmocom.org/trac/wiki/GrOsmoSDR
-do_step_p "gr-osmosdr" && (
-    package_banner "gr-osmosdr"
-    update_git git://git.osmocom.org/gr-osmosdr.git
+build_step "gr-osmosdr" "git://git.osmocom.org/gr-osmosdr.git" "master" && (
     cmake_build gr-osmosdr.git/build
 )
 
 # ------------------------------------------------------------------------
 # grextras
 # https://github.com/guruofquality/grextras/wiki
-# do_step_p "grextras" && (
-#     package_banner "grextras"
-#     update_git https://github.com/guruofquality/grextras.git
+# build_step "grextras" "https://github.com/CorteXlab/fft-web.git" "master" && (
 #     cmake_build grextras.git/build
 # )
 
 # ------------------------------------------------------------------------
 # gr-baz
 # https://github.com/balint256/gr-baz
-# do_step_p "gr-baz" && (
-#     package_banner "gr-baz"
-#     update_git https://github.com/balint256/gr-baz.git
+# build_step "gr-baz" "https://github.com/CorteXlab/fft-web.git" "master" && (
 #     cmake_build gr-baz.git/build
 # )
 
 # ------------------------------------------------------------------------
 # uhd firmware update
-do_step_p "uhd-firmware" && (
-    package_banner "uhd-firmware"
+[ "$ONLYGIT" != "0" ] && step "uhd-firmware" && (
     $INSTALL_DIR/lib/uhd/utils/uhd_images_downloader.py
 )
 
 # ------------------------------------------------------------------------
 # fft-web
-do_step_p "fft-web" && (
-    package_banner "fft-web"
-    update_git https://github.com/CorteXlab/fft-web.git
+build_step "fft-web" "https://github.com/CorteXlab/fft-web.git" "master" && (
     (
         cd fft-web.git/grc
         eval $SET_GNURADIO_ENV
