@@ -198,12 +198,12 @@ if [ "$BUNDLEOUT" != "" ] ; then
     cat /dev/null > "$BUNDLEOUT"
 fi
 
+export GNURADIOPYTHONHOMEPATH="$INSTALL_DIR/"$(python -c "import sys,os; print os.sep.join(['lib', 'python' + sys.version[:3], 'dist-packages'])")
 SET_GNURADIO_ENV=$(cat <<EOF
-export GNURADIOPYTHONHOMEPATH="$INSTALL_DIR/"\$(python -c "import sys,os; print os.sep.join(['lib', 'python' + sys.version[:3], 'dist-packages'])")
-export PYTHONPATH="\$GNURADIOPYTHONHOMEPATH\${PYTHONPATH:+:\${PYTHONPATH}}"
+export PYTHONPATH="$GNURADIOPYTHONHOMEPATH\${PYTHONPATH:+:\${PYTHONPATH}}"
 export LD_LIBRARY_PATH="$INSTALL_DIR/lib\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}"
 export PATH="$INSTALL_DIR/bin\${PATH:+:\${PATH}}"
-export MANPATH="$INSTALL_DIR/share/man:\${MANPATH}"
+export MANPATH="$INSTALL_DIR/share/man\${MANPATH:+:\${MANPATH}}"
 EOF
 )
 
