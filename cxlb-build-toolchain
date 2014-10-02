@@ -186,7 +186,7 @@ grc_build_hier_block() {
 
 NOCHECKOUT=1
 PULL=1
-STEPS="uhd rtl-sdr gnuradio gr-iqbal bladeRF hackRF gr-osmosdr uhd-firmware fft-web"
+STEPS="uhd rtl-sdr gnuradio gr-iqbal bladeRF hackRF gr-osmosdr uhd-firmware fft-web gr-cortexlab"
 BUNDLEOUT=""
 BUNDLEIN=""
 ONLYGIT=1
@@ -325,6 +325,18 @@ build_step "fft-web" "https://github.com/CorteXlab/fft-web.git" "master" && (
     (
         cd fft-web.git/grc
         grc_build_hier_block fft-web.grc
+    )
+)
+
+# ------------------------------------------------------------------------
+# gr-cortexlab
+build_step "gr-cortexlab" "https://github.com/CorteXlab/gr-cortexlab.git" "master" && (
+    cmake_build gr-cortexlab.git/build
+    (
+        cd gr-cortexlab.git/grc
+        for GRC in *.grc ; do
+            grc_build_hier_block $GRC
+        done
     )
 )
 
