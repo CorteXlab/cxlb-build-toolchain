@@ -2,6 +2,8 @@
 
 set -e
 
+SCRIPTLOCATION=$(cd `dirname $0`; pwd)
+
 usage() {
     cat <<EOF
 `basename $0` [options] <compile_dir> <install_dir>
@@ -162,6 +164,26 @@ build_step() {
     )
 }
 
+grc_build_hier_block() {
+    GRC=$1
+    STEM=${GRC%.grc}
+    eval $SET_GNURADIO_ENV
+    grcc -d . $STEM.grc
+
+    # WARN: currently option -d does not work -> compiled .py and
+    # .py.xml go in ~/.grc_gnuradio, hence the following hack
+    cp ~/.grc_gnuradio/$STEM.py ~/.grc_gnuradio/$STEM.py.xml .
+
+    # the following hack to fix what seems to be a strange bug of
+    # grcc, which occurs only in some circumstances, where the python
+    # imports are not correct
+    xalan -xsl $SCRIPTLOCATION/fix_xml.xsl -param pythondir "'$GNURADIOPYTHONHOMEPATH'" -param modulename $STEM < $STEM.py.xml > $STEM.py.xml.tmp
+    mv $STEM.py.xml.tmp $STEM.py.xml
+
+    cp $STEM.py "$GNURADIOPYTHONHOMEPATH"
+    cp $STEM.py.xml $INSTALL_DIR/share/gnuradio/grc/blocks/
+}
+
 NOCHECKOUT=1
 PULL=1
 STEPS="uhd rtl-sdr gnuradio gr-iqbal bladeRF hackRF gr-osmosdr uhd-firmware fft-web"
@@ -302,14 +324,7 @@ build_step "gr-osmosdr" "git://git.osmocom.org/gr-osmosdr.git" "master" && (
 build_step "fft-web" "https://github.com/CorteXlab/fft-web.git" "master" && (
     (
         cd fft-web.git/grc
-        eval $SET_GNURADIO_ENV
-        grcc -d . fft-web.grc
-        # WARN: currently option -d does not work -> compiled .py and .py.xml go in ~/.grc_gnuradio, hence the following hack
-        cp ~/.grc_gnuradio/fft_web.py ~/.grc_gnuradio/fft_web.py.xml .
-        xalan -xsl fix_xml.xsl -param pythondir "'$GNURADIOPYTHONHOMEPATH'" < fft_web.py.xml > fft_web.py.xml.tmp
-        mv fft_web.py.xml.tmp fft_web.py.xml
-        cp fft_web.py "$GNURADIOPYTHONHOMEPATH"
-        cp fft_web.py.xml $INSTALL_DIR/share/gnuradio/grc/blocks/
+        grc_build_hier_block fft-web.grc
     )
 )
 
