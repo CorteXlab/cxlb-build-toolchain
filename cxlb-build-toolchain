@@ -340,6 +340,19 @@ build_step "gr-cortexlab" "https://github.com/CorteXlab/gr-cortexlab.git" "maste
     )
 )
 
+# ------------------------------------------------------------------------
+# gr-nutaq
+# --
+# not available as public git repo, so the user needs to get it on its
+# own (download from nutaq) and put it in the build dir, in directory
+# gr-nutaq/
+[ "$ONLYGIT" != "0" ] && step "gr-nutaq" && (
+    # change nutaq install path in hard in CMakeLists.txt since nutaq uses normal cmake variables, which cannot be changed by user
+    sed -i -e 's*set(NUTAQ_SDKROOT "/opt/Nutaq/ADP6/ADP_MicroTCA/sdk")*set(NUTAQ_SDKROOT "/cortexlab/toolchains/pico/Nutaq/ADP6/ADP_MicroTCA/sdk")*' gr-nutaq/lib/CMakeLists.txt
+    sed -i -e 's*set(NUTAQ_SDKROOT "/opt/Nutaq/ADP6/ADP_MicroTCA/sdk")*set(NUTAQ_SDKROOT "/cortexlab/toolchains/pico/Nutaq/ADP6/ADP_MicroTCA/sdk")*' gr-nutaq/swig/CMakeLists.txt
+    cmake_build gr-nutaq/build2 -DNUTAQ_SDKROOT="/cortexlab/toolchains/pico/Nutaq/ADP6/ADP_MicroTCA/sdk"
+)
+
 MANUAL_OPERATIONS="${MANUAL_OPERATIONS}$(cat <<EOF
 - add group usrp
 
