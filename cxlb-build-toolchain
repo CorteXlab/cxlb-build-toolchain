@@ -2,7 +2,7 @@
 
 set -e
 
-SCRIPTLOCATION=$(cd `dirname $0`; pwd)
+SCRIPTLOCATION=$(cd $(dirname "$0"); pwd)
 
 usage() {
     cat <<EOF
