@@ -209,9 +209,8 @@ if [ $# -ne 2 ] ; then
     usage
     exit 1
 fi
-# args: strip trailing slash if needed (except if arg is "/")
-if [ "$1" != "/" ] ; then SOURCES_DIR="${1%/}" ; else SOURCES_DIR="$1" ; fi
-if [ "$2" != "/" ] ; then INSTALL_DIR="${2%/}" ; else INSTALL_DIR="$2" ; fi
+SOURCES_DIR="$(cd "$1"; pwd)"
+INSTALL_DIR="$(cd "$2"; pwd)"
 
 #COMMON_CMAKE_OPTS="-DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR"
 COMMON_CMAKE_OPTS="-DCMAKE_INSTALL_PREFIX=$INSTALL_DIR"
