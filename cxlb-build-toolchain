@@ -323,7 +323,7 @@ build_step "gr-osmosdr" "git://git.osmocom.org/gr-osmosdr.git" "master" && (
 build_step "fft-web" "https://github.com/CorteXlab/fft-web.git" "master" && (
     (
         cd fft-web.git/grc
-        grc_build_hier_block fft-web.grc
+        grc_build_hier_block fft_web.grc
     )
 )
 
