@@ -18,6 +18,7 @@ usage() {
 
     -s <STEPS> : manually select the list of steps to execute (defaults:
                  $STEPS)
+    -P : add nutaq steps ($NUTAQ_STEPS)
     -p : pull latest updates from remote git repos
     -o <FILE> : output all packages versions to the bundle file <FILE>
     -i <FILE> : checkout packages versions from bundle file <FILE>
@@ -27,7 +28,8 @@ usage() {
     -c : clean build dir before build
     -h : this help
 
-This scripts packages gnuradio + additional gnuradio contrib packages
+This scripts packages the cortexlab toolchain. It is for linux-amd64
+only.
 
 Prior to running it you must:
 
@@ -47,7 +49,7 @@ Prior to running it you must:
   pyqt4-dev-tools python-qwt5-qt4 cmake git-core wget libxi-dev
   python-docutils gtk2-engines-pixbuf r-base-dev python-tk
   liborc-0.4-0 liborc-0.4-dev libasound2-dev python-gtk2 libportaudio2
-  portaudio19-dev ca-certificates xalan
+  portaudio19-dev ca-certificates xalan libpcap0.8
 
 EOF
 }
@@ -89,27 +91,24 @@ update_git() {
     DEFAULTCHECKOUT=$2
     DIR=$(basename "$REPO")
     echo "### update_git from $REPO in $(readlink -f $DIR)"
-    if [ -d "$DIR" ] ; then
-        pushd "$DIR" > /dev/null
-        if [ $PULL -eq 0 ] ; then git pull ; fi
-        popd > /dev/null
-    else
+    if [ ! -d "$DIR" ] ; then
         git clone "$REPO" "$DIR"
     fi
     if [ "$NOCHECKOUT" != "0" ] ; then
+        pushd "$DIR" > /dev/null
         if [ "$BUNDLEIN" != "" ] ; then
-            pushd "$DIR" > /dev/null
             TAG=$(sed -n "s/$DIR=\(.*\)/\1/p" "$BUNDLEIN")
             if [ "$TAG" == "" ] ; then
                 TAG="$DEFAULTCHECKOUT"
             fi
             git checkout "$TAG"
-            popd > /dev/null
         else
-            pushd "$DIR" > /dev/null
             git checkout "$DEFAULTCHECKOUT"
-            popd > /dev/null
         fi
+        if [ $PULL -eq 0 ] ; then
+            git pull
+        fi
+        popd > /dev/null
     fi
     if [ "$BUNDLEOUT" != "" ] ; then
         echo "$DIR="$(get_tag "$DIR") >> "$BUNDLEOUT"
@@ -128,7 +127,9 @@ cmake_build() {
     fi
     mkdir -p "$BUILDDIR"
     pushd "$BUILDDIR" > /dev/null
+    eval "$SET_CXLB_TOOLCHAIN_ENV"
     cmake $COMMON_CMAKE_OPTS $CMAKE_OPTS ../
+    #make VERBOSE=1
     make
     make install
     popd > /dev/null
@@ -145,12 +146,10 @@ step() {
     # checks if a step needs to be performed. If yes, display a step banner and return 0
     # param 1: step name
     STEP="$1"
-    do_step_p "$STEP" && (
-        package_banner "$STEP"
-    )
+    do_step_p "$STEP" && package_banner "$STEP"
 }
 
-build_step() {
+git_step() {
     # build step preamble: update git, and return 0 if the actual build has to proceed
     # param 1: step name
     # param 2: git repository url
@@ -164,10 +163,19 @@ build_step() {
     )
 }
 
+nogit_step() {
+    # build step preamble for steps without git
+    # param 1: step name
+    STEP="$1"
+    [ "$ONLYGIT" != "0" ] && step "$STEP"
+}
+
 grc_build_hier_block() {
+    # build a gnuradio-companion hierarchical block
+    # param 1: grc filename
     GRC=$1
     STEM=${GRC%.grc}
-    eval $SET_GNURADIO_ENV
+    eval "$SET_CXLB_TOOLCHAIN_ENV"
     grcc -d . $STEM.grc
 
     # WARN: currently option -d does not work -> compiled .py and
@@ -177,22 +185,36 @@ grc_build_hier_block() {
     # the following hack to fix what seems to be a strange bug of
     # grcc, which occurs only in some circumstances, where the python
     # imports are not correct
-    xalan -xsl $SCRIPTLOCATION/fix_xml.xsl -param pythondir "'$GNURADIOPYTHONHOMEPATH'" -param modulename $STEM < $STEM.py.xml > $STEM.py.xml.tmp
+    xalan -xsl $SCRIPTLOCATION/fix_xml.xsl -param pythondir "'$NEWPYTHONPATH'" -param modulename $STEM < $STEM.py.xml > $STEM.py.xml.tmp
     mv $STEM.py.xml.tmp $STEM.py.xml
 
-    cp $STEM.py "$GNURADIOPYTHONHOMEPATH"
+    cp $STEM.py "$NEWPYTHONPATH"
     cp $STEM.py.xml $INSTALL_DIR/share/gnuradio/grc/blocks/
+}
+
+skip_annoying_prompts() {
+    # generate 50 sequences of (2000 newlines followed by 100 "Y")
+    for Y in $(seq 1 50) ; do
+        for X in $(seq 1 2000) ; do
+            echo
+        done
+        for X in $(seq 1 100) ; do
+            echo Y
+        done
+    done
 }
 
 NOCHECKOUT=1
 PULL=1
-STEPS="uhd rtl-sdr gnuradio gr-iqbal bladeRF hackRF gr-osmosdr uhd-firmware fft-web gr-cortexlab"
+NUTAQ_STEPS="xilinx digilent adp gr-cortexlab"
+STEPS="uhd rtl-sdr gnuradio gr-iqbal bladerf hackrf gr-osmosdr uhd-firmware fft-web"
 BUNDLEOUT=""
 BUNDLEIN=""
 ONLYGIT=1
 CLEANBUILD=1
-while getopts "Nno:i:s:pch" OPT; do
+while getopts "PNno:i:s:pch" OPT; do
     case $OPT in
+        P) STEPS="$STEPS $NUTAQ_STEPS" ;;
         N) NOCHECKOUT=0 ;;
         n) ONLYGIT=0 ;;
         o) BUNDLEOUT=$(readlink -f "$OPTARG") ;;
@@ -209,27 +231,40 @@ if [ $# -ne 2 ] ; then
     usage
     exit 1
 fi
-SOURCES_DIR="$(cd "$1"; pwd)"
-INSTALL_DIR="$(cd "$2"; pwd)"
+SOURCES_DIR="$(mkdir -p "$1" ; cd "$1" ; pwd)"
+INSTALL_DIR="$(mkdir -p "$2" ; cd "$2" ; pwd)"
 
 #COMMON_CMAKE_OPTS="-DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR"
 COMMON_CMAKE_OPTS="-DCMAKE_INSTALL_PREFIX=$INSTALL_DIR"
+XILINX_LABTOOL_PACKAGE="Xilinx_LabTools_14.7_1015_1"
+DIGILENT_RUNTIME_PACKAGE="digilent.adept.runtime_2.15.3-x86_64"
+DIGILENT_UTILITIES_PACKAGE="digilent.adept.utilities_2.1.1-x86_64"
+DIGILENT_PLUGIN_PACKAGE="libCseDigilent_2.5.2-x86_64"
+FTDI_DRIVER_PACKAGE="libftd2xx1.1.12"
+NUTAQ_ADP_PACKAGE="nutaq-adp6-microtca-sdk-6-5-0-1-amd64"
 
 if [ "$BUNDLEOUT" != "" ] ; then
     cat /dev/null > "$BUNDLEOUT"
 fi
 
-export GNURADIOPYTHONHOMEPATH="$INSTALL_DIR/"$(python -c "import sys,os; print os.sep.join(['lib', 'python' + sys.version[:3], 'dist-packages'])")
-SET_GNURADIO_ENV=$(cat <<EOF
-export PYTHONPATH="$GNURADIOPYTHONHOMEPATH\${PYTHONPATH:+:\${PYTHONPATH}}"
+export NEWPYTHONPATH="$INSTALL_DIR/"$(python -c "import sys,os; print os.sep.join(['lib', 'python' + sys.version[:3], 'dist-packages'])")
+SET_CXLB_TOOLCHAIN_ENV=$(cat <<EOF
+export PYTHONPATH="$NEWPYTHONPATH\${PYTHONPATH:+:\${PYTHONPATH}}"
 export LD_LIBRARY_PATH="$INSTALL_DIR/lib\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}"
 export PATH="$INSTALL_DIR/bin\${PATH:+:\${PATH}}"
 export MANPATH="$INSTALL_DIR/share/man\${MANPATH:+:\${MANPATH}}"
 export PKG_CONFIG_PATH="$INSTALL_DIR/lib/pkgconfig\${PKG_CONFIG_PATH:+:\${PKG_CONFIG_PATH}}"
+export CMAKE_MODULE_PATH="$INSTALL_DIR/lib/cmake\${CMAKE_MODULE_PATH:+:\${CMAKE_MODULE_PATH}}"
+export DIGILENT_ADEPT_CONF="$INSTALL_DIR/etc/digilent-adept.conf"
+export XLNX_DIGILENT_ADEPT_CONF="$INSTALL_DIR/etc/digilent-adept.conf"
+if [ -e $INSTALL_DIR/opt/Xilinx/*/LabTools/settings64.sh ]
+then
+  source $INSTALL_DIR/opt/Xilinx/*/LabTools/settings64.sh > /dev/null
+fi
+export LD_LIBRARY_PATH="$INSTALL_DIR/opt/Nutaq/ADP6/ADP_MicroTCA/sdk/lib64\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}"
+export PATH="$INSTALL_DIR/opt/Nutaq/ADP6/ADP_MicroTCA/sdk/bin\${PATH:+:\${PATH}}"
 EOF
 )
-
-MANUAL_OPERATIONS=""
 
 if [ ! -d "$SOURCES_DIR" ] ; then
     mkdir -p $SOURCES_DIR
@@ -243,16 +278,17 @@ cd $SOURCES_DIR
 # install des dépendances
 # aptitude install libboost-all-dev libusb-1.0-0-dev python-cheetah doxygen python-docutils
 # en réalité juste libusb-1.0-0-dev
-build_step "uhd" "git://github.com/EttusResearch/uhd.git" "master" && (
+git_step "uhd" "git://github.com/EttusResearch/uhd.git" "master" && (
     cmake_build uhd.git/host/build
 )
 
 # ------------------------------------------------------------------------
 # rtl-sdr osmocom
 # http://sdr.osmocom.org/trac/wiki/rtl-sdr
-build_step "rtl-sdr" "git://git.osmocom.org/rtl-sdr.git" "master" && (
+git_step "rtl-sdr" "git://git.osmocom.org/rtl-sdr.git" "master" && (
     cmake_build rtl-sdr.git/build
-    MANUAL_OPERATIONS="${MANUAL_OPERATIONS}- copy ${SOURCES_DIR}/rtl-sdr.git/rtl-sdr.rules to /etc/udev/rules.d/\n\n"
+    mkdir -p "$INSTALL_DIR/etc/udev/rules.d/"
+    cp "$SOURCES_DIR/rtl-sdr.git/rtl-sdr.rules" "$INSTALL_DIR/etc/udev/rules.d/"
 )
 
 # ------------------------------------------------------------------------
@@ -263,14 +299,14 @@ build_step "rtl-sdr" "git://git.osmocom.org/rtl-sdr.git" "master" && (
 # install des dépendances
 # aptitude install libfontconfig1-dev libxrender-dev libpulse-dev swig g++ automake autoconf libtool python-dev libfftw3-dev libcppunit-dev libboost-all-dev libusb-dev libusb-1.0-0-dev fort77 libsdl1.2-dev python-wxgtk2.8 git-core libqt4-dev python-numpy ccache python-opengl libgsl0-dev python-cheetah python-lxml doxygen qt4-dev-tools libusb-1.0-0-dev libqwt5-qt4-dev libqwtplot3d-qt4-dev pyqt4-dev-tools python-qwt5-qt4 cmake git-core wget libxi-dev python-docutils gtk2-engines-pixbuf r-base-dev python-tk liborc-0.4-0 liborc-0.4-dev libasound2-dev python-gtk2 libportaudio2 portaudio19-dev ca-certificates
 # en réalité juste libcppunit-dev fort77 libqt4-dev ccache libgsl0-dev qt4-dev-tools libqwt5-qt4-dev libqwtplot3d-qt4-dev pyqt4-dev-tools python-qwt5-qt4 r-base-dev liborc-0.4-dev portaudio19-dev
-build_step "gnuradio" "http://git.gnuradio.org/git/gnuradio.git" "maint" && (
+git_step "gnuradio" "http://git.gnuradio.org/git/gnuradio.git" "maint" && (
     cmake_build gnuradio.git/build
 )
 
 # ------------------------------------------------------------------------
 # gr-iqbal
 # http://git.osmocom.org/gr-iqbal
-build_step "gr-iqbal" "git://git.osmocom.org/gr-iqbal.git" "master" && (
+git_step "gr-iqbal" "git://git.osmocom.org/gr-iqbal.git" "master" && (
     ( cd gr-iqbal.git ; git submodule init ; git submodule update )
     cmake_build gr-iqbal.git/build
 )
@@ -278,115 +314,232 @@ build_step "gr-iqbal" "git://git.osmocom.org/gr-iqbal.git" "master" && (
 # ------------------------------------------------------------------------
 # bladeRF
 # http://www.nuand.com/bladeRF
-build_step "bladeRF" "https://github.com/Nuand/bladeRF.git" "master" && (
-    cmake_build bladeRF.git/host/build -DINSTALL_UDEV_RULES=OFF
-    MANUAL_OPERATIONS="${MANUAL_OPERATIONS}- copy ${SOURCES_DIR}/bladeRF.git/host/build/misc/udev/88-nuand.rules to /etc/udev/rules.d/\n\n"
+git_step "bladerf" "https://github.com/Nuand/bladeRF.git" "master" && (
+    cmake_build bladeRF.git/host/build -DINSTALL_UDEV_RULES=ON -DUDEV_RULES_PATH="$INSTALL_DIR/etc/udev/rules.d/"
 )
 
 # ------------------------------------------------------------------------
 # hackrf
 # https://github.com/mossmann/hackrf
-build_step "hackRF" "https://github.com/mossmann/hackrf.git" "master" && (
+git_step "hackrf" "https://github.com/mossmann/hackrf.git" "master" && (
     cmake_build hackrf.git/host/build
-    MANUAL_OPERATIONS="${MANUAL_OPERATIONS}- copy ${SOURCES_DIR}/hackrf.git/host/hackrf-tools/52-hackrf.rules to /etc/udev/rules.d/\n\n"
+    mkdir -p "$INSTALL_DIR/etc/udev/rules.d"
+    cp "$SOURCES_DIR/hackrf.git/host/libhackrf/53-hackrf.rules" "$INSTALL_DIR/etc/udev/rules.d/"
 )
 
 # ------------------------------------------------------------------------
 # gr-osmosdr osmocom
 # http://sdr.osmocom.org/trac/wiki/GrOsmoSDR
-build_step "gr-osmosdr" "git://git.osmocom.org/gr-osmosdr.git" "master" && (
+git_step "gr-osmosdr" "git://git.osmocom.org/gr-osmosdr.git" "master" && (
     cmake_build gr-osmosdr.git/build
 )
 
 # ------------------------------------------------------------------------
-# grextras
-# https://github.com/guruofquality/grextras/wiki
-# build_step "grextras" "https://github.com/CorteXlab/fft-web.git" "master" && (
-#     cmake_build grextras.git/build
-# )
-
-# ------------------------------------------------------------------------
-# gr-baz
-# https://github.com/balint256/gr-baz
-# build_step "gr-baz" "https://github.com/CorteXlab/fft-web.git" "master" && (
-#     cmake_build gr-baz.git/build
-# )
-
-# ------------------------------------------------------------------------
 # uhd firmware update
-[ "$ONLYGIT" != "0" ] && step "uhd-firmware" && (
+nogit_step "uhd-firmware" && (
     $INSTALL_DIR/lib/uhd/utils/uhd_images_downloader.py
 )
 
 # ------------------------------------------------------------------------
 # fft-web
-build_step "fft-web" "https://github.com/CorteXlab/fft-web.git" "master" && (
+git_step "fft-web" "https://github.com/CorteXlab/fft-web.git" "master" && (
+    cd fft-web.git/grc
+    grc_build_hier_block fft_web.grc
+)
+
+# ------------------------------------------------------------------------
+# xilinx
+# download Xilinx_LabTools_14.3_P.40xd.6.0.tar or
+# Xilinx_LabTools_14.7_1015_1.tar from
+# http://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/design-tools/v2012_3---14_3.html
+# (need an account)
+nogit_step "xilinx" && (
+    cd xilinx
+    # rm previous install (or installer will refuse to proceed)
+    rm -rf "$INSTALL_DIR/opt/Xilinx"
+    TMPDIR="$(mkdir -p tmp ; cd tmp ; pwd)"
+    rm -f "$TMPDIR/batchscript"
+    if [ ! -d "$XILINX_LABTOOL_PACKAGE" ] ; then tar xf "${XILINX_LABTOOL_PACKAGE}.tar" ; fi
+    cd "$XILINX_LABTOOL_PACKAGE/bin/lin64"
+    ./batchxsetup --samplebatchscript "$TMPDIR/batchscript"
+    sed -i -e "s&destination_dir=.*&destination_dir=$INSTALL_DIR/opt/Xilinx&" "$TMPDIR/batchscript"
+    skip_annoying_prompts | ./batchxsetup --batch "$TMPDIR/batchscript"
+    # fix libstdc++.so.6 conflict
+    for BADLIB in $(find "$INSTALL_DIR/opt/Xilinx" -name libstdc++.so.6 -or -name libstdc++.so | grep lin64) ; do
+        GOODLIB=$(/sbin/ldconfig -p | grep libstdc++.so.6 | grep 64 | awk '{print $4}')
+        echo "fixing $(basename $BADLIB) $BADLIB -> $GOODLIB"
+        mv "$BADLIB" "$BADLIB.bak"
+        ln -s "$GOODLIB" "$BADLIB"
+    done
+    # fix perms
+    chmod -R go-w "$INSTALL_DIR/opt/Xilinx"
+)
+
+# ------------------------------------------------------------------------
+# digilent
+# download digilent.adept.runtime_2.15.3-x86_64.tar.gz and
+# digilent.adept.utilities_2.1.1-x86_64.tar.gz from
+# http://www.digilentinc.com/Products/Detail.cfm?Prod=ADEPT2 and
+# libCseDigilent_2.5.2-x86_64.tar.gz from
+# http://www.digilentinc.com/Products/Detail.cfm?NavPath=2,66,768&Prod=DIGILENT-PLUGIN
+# and libftd2xx1.1.12.tar.gz from
+# http://www.ftdichip.com/Drivers/D2XX.htm
+nogit_step "digilent" && (
+    cd digilent
+    # FTDI driver
+    if [ ! -d "$FTDI_DRIVER_PACKAGE" ] ; then
+        mkdir "$FTDI_DRIVER_PACKAGE"
+        cd "$FTDI_DRIVER_PACKAGE"
+        tar xzf "../${FTDI_DRIVER_PACKAGE}.tar.gz"
+    fi
+    FTDILIB=$FTDI_DRIVER_PACKAGE/release/build/x86_64/libftd2xx.so.*
+    mkdir -p "$INSTALL_DIR/lib"
+    cp $FTDILIB "$INSTALL_DIR/lib"
+    ( cd "$INSTALL_DIR/lib" ; ln -fs $(basename $FTDILIB) libftd2xx.so )
+    # digilent runtime
+    if [ ! -d "$DIGILENT_RUNTIME_PACKAGE" ] ; then tar xzf "${DIGILENT_RUNTIME_PACKAGE}.tar.gz" ; fi
     (
-        cd fft-web.git/grc
-        grc_build_hier_block fft_web.grc
+        cd "$DIGILENT_RUNTIME_PACKAGE"
+        mkdir -p "$INSTALL_DIR/etc"
+        echo "$INSTALL_DIR/etc" | ./install.sh datapath=$INSTALL_DIR/share/digilent/data libpath=$INSTALL_DIR/lib sbinpath=$INSTALL_DIR/bin || true
     )
+    mkdir -p "$INSTALL_DIR/etc/udev/rules.d"
+    cp "$SOURCES_DIR/digilent/$DIGILENT_RUNTIME_PACKAGE/52-digilent-usb.rules" "$INSTALL_DIR/etc/udev/rules.d/"
+    # digilent utilities
+    if [ ! -d "$DIGILENT_UTILITIES_PACKAGE" ] ; then tar xzf "${DIGILENT_UTILITIES_PACKAGE}.tar.gz" ; fi
+    mkdir -p "$INSTALL_DIR/bin"
+    cp $DIGILENT_UTILITIES_PACKAGE/bin64/* "$INSTALL_DIR/bin"
+    mkdir -p "$INSTALL_DIR/share/man/man1"
+    cp $DIGILENT_UTILITIES_PACKAGE/man/*.1 "$INSTALL_DIR/share/man/man1"
+    # digilent plugin to xilinx labtool to enable use of HS2 with impact
+    if [ ! -d "$DIGILENT_PLUGIN_PACKAGE" ] ; then tar xzf "${DIGILENT_PLUGIN_PACKAGE}.tar.gz" ; fi
+    mkdir -p $INSTALL_DIR/opt/Xilinx/*/LabTools/LabTools/lib/lin64/plugins/Digilent/libCseDigilent
+    cp $DIGILENT_PLUGIN_PACKAGE/ISE14x/plugin/* $INSTALL_DIR/opt/Xilinx/*/LabTools/LabTools/lib/lin64/plugins/Digilent/libCseDigilent
+)
+
+# ------------------------------------------------------------------------
+# adp
+# download adp µtca debian package from http://nutaq.com/en/support/latest-utca-edition:
+# http://nutaq.com/sites/default/files/files-support/utca-6-5-0/nutaq-adp6-microtca-sdk-6-5-0-1-amd64.deb
+# http://nutaq.com/sites/default/files/files-support/utca-6-4-0/nutaq-adp6-microtca-sdk_6-4-0-2_amd64.deb
+#TODO: add pathes
+nogit_step "adp" && (
+    cd nutaq
+    # adp software tools µtca
+    dpkg -x $NUTAQ_ADP_PACKAGE.deb $INSTALL_DIR
+    # gr-nutaq
+    # ~/opt/gnuradio.test.adp/opt/Nutaq/ADP6/ADP_MicroTCA/sdk/gnuradio/gr-nutaq
+    sed -i -e "s*set(NUTAQ_SDKROOT \"/opt/Nutaq/ADP6/ADP_MicroTCA/sdk\")*set(NUTAQ_SDKROOT \"$INSTALL_DIR/opt/Nutaq/ADP6/ADP_MicroTCA/sdk\")*" $INSTALL_DIR/opt/Nutaq/ADP6/ADP_MicroTCA/sdk/gnuradio/gr-nutaq/lib/CMakeLists.txt
+    sed -i -e "s*set(NUTAQ_SDKROOT \"/opt/Nutaq/ADP6/ADP_MicroTCA/sdk\")*set(NUTAQ_SDKROOT \"$INSTALL_DIR/opt/Nutaq/ADP6/ADP_MicroTCA/sdk\")*" $INSTALL_DIR/opt/Nutaq/ADP6/ADP_MicroTCA/sdk/gnuradio/gr-nutaq/swig/CMakeLists.txt
+    cmake_build $INSTALL_DIR/opt/Nutaq/ADP6/ADP_MicroTCA/sdk/gnuradio/gr-nutaq/build -DNUTAQ_SDKROOT="$INSTALL_DIR/opt/Nutaq/ADP6/ADP_MicroTCA/sdk"
 )
 
 # ------------------------------------------------------------------------
 # gr-cortexlab
-build_step "gr-cortexlab" "https://github.com/CorteXlab/gr-cortexlab.git" "master" && (
+git_step "gr-cortexlab" "https://github.com/CorteXlab/gr-cortexlab.git" "master" && (
     cmake_build gr-cortexlab.git/build
-    (
-        cd gr-cortexlab.git/grc
-        for GRC in *.grc ; do
-            grc_build_hier_block $GRC
-        done
-    )
+    cd gr-cortexlab.git/grc
+    for GRC in *.grc ; do
+        grc_build_hier_block $GRC
+    done
 )
 
 # ------------------------------------------------------------------------
-# gr-nutaq
-# --
-# not available as public git repo, so the user needs to get it on its
-# own (download from nutaq) and put it in the build dir, in directory
-# gr-nutaq/
-[ "$ONLYGIT" != "0" ] && step "gr-nutaq" && (
-    # change nutaq install path in hard in CMakeLists.txt since nutaq uses normal cmake variables, which cannot be changed by user
-    sed -i -e 's*set(NUTAQ_SDKROOT "/opt/Nutaq/ADP6/ADP_MicroTCA/sdk")*set(NUTAQ_SDKROOT "/cortexlab/toolchains/pico/Nutaq/ADP6/ADP_MicroTCA/sdk")*' gr-nutaq/lib/CMakeLists.txt
-    sed -i -e 's*set(NUTAQ_SDKROOT "/opt/Nutaq/ADP6/ADP_MicroTCA/sdk")*set(NUTAQ_SDKROOT "/cortexlab/toolchains/pico/Nutaq/ADP6/ADP_MicroTCA/sdk")*' gr-nutaq/swig/CMakeLists.txt
-    cmake_build gr-nutaq/build2 -DNUTAQ_SDKROOT="/cortexlab/toolchains/pico/Nutaq/ADP6/ADP_MicroTCA/sdk"
-)
+# generate conf file
+mkdir -p "$INSTALL_DIR/bin"
+cat > "$INSTALL_DIR/bin/cxlb-toolchain-system-conf" <<EOF
+#!/bin/bash
 
-MANUAL_OPERATIONS="${MANUAL_OPERATIONS}$(cat <<EOF
-- add group usrp
+# ------------------------------------------------------------------------
+# script to be run as root to perform system-wide configurations
+# ------------------------------------------------------------------------
 
-- add needed users in this group
+# - usrp:
+#
+#   optional steps:
+#
+#   - add group usrp:
+#
+#     $ addgroup usrp
+#
+#   - add needed users to this group:
+#
+#     $ adduser <login> usrp
+#
+#   - set some sysctl. In /etc/sysctl.conf:
+#
+#     net.core.rmem_max = 1000000
+#     net.core.wmem_max = 1000000
+#     kernel.shmmax = 2147483648
+#
+#     and for immediate setting:
+#
+#     $ sudo sysctl -w net.core.rmem_max=1000000 >/dev/null 2>&1
+#     $ sudo sysctl -w net.core.wmem_max=1000000 >/dev/null 2>&1
+#     $ sudo sysctl -w kernel.shmmax=2147483648  >/dev/null 2>&1
+#
+#   - set rtprio for members of group usrp. In /etc/security/limits.conf:
+#
+#     @usrp  - rtprio 50
+#
+#     (need to logout / login to activate this)
 
-- may need to reload udev rules:
+# - rtl-sdr:
 
-  $ sudo udevadm control --reload-rules
+if [ -f "$INSTALL_DIR/etc/udev/rules.d/rtl-sdr.rules" ] ; then
+  mv "/etc/udev/rules.d/rtl-sdr.rules" "/etc/udev/rules.d/rtl-sdr.rules.bak"
+  cp "$INSTALL_DIR/udev/rules.d/rtl-sdr.rules" "/etc/udev/rules.d/"
+fi
 
-- may need to set some sysctl. In /etc/sysctl.conf:
+# - bladeRF:
 
-  net.core.rmem_max = 1000000
-  net.core.wmem_max = 1000000
-  kernel.shmmax = 2147483648
+if [ -f "$INSTALL_DIR/etc/udev/rules.d/88-nuand.rules" ] ; then
+  mv "/etc/udev/rules.d/88-nuand.rules" "/etc/udev/rules.d/88-nuand.rules.bak"
+  cp "$INSTALL_DIR/udev/rules.d/88-nuand.rules" "/etc/udev/rules.d/"
+fi
 
-  and for immediate setting:
+# - hackrf:
 
-  $ sudo sysctl -w net.core.rmem_max=1000000 >/dev/null 2>&1
-  $ sudo sysctl -w net.core.wmem_max=1000000 >/dev/null 2>&1
-  $ sudo sysctl -w kernel.shmmax=2147483648  >/dev/null 2>&1
+if [ -f "$INSTALL_DIR/etc/udev/rules.d/53-hackrf.rules" ] ; then
+  mv "/etc/udev/rules.d/53-hackrf.rules" "/etc/udev/rules.d/53-hackrf.rules.bak"
+  cp "$INSTALL_DIR/udev/rules.d/53-hackrf.rules" "/etc/udev/rules.d/"
+fi
 
-- may need rtprio for members of group usrp. In /etc/security/limits.conf:
+# - digilent HS2:
 
-  @usrp  - rtprio 50
+if [ -f "$INSTALL_DIR/etc/udev/rules.d/52-digilent-usb.rules" ] ; then
+  mv "/etc/udev/rules.d/52-digilent-usb.rules" "/etc/udev/rules.d/52-digilent-usb.rules.bak"
+  cp "$INSTALL_DIR/udev/rules.d/52-digilent-usb.rules" "/etc/udev/rules.d/"
+fi
 
-  and logout / login to activate this
+# - if any udev rule was modified or added, reload rules:
 
-- to use the packaged gnuradio you need to source the following lines:
-
-$SET_GNURADIO_ENV
+udevadm control --reload-rules
 
 EOF
-)"
+chmod a+x "$INSTALL_DIR/bin/cxlb-toolchain-system-conf"
 
-echo -e "\n------------------------------------------------------------------------\n"
-echo -e "manual operations:\n"
-echo -e "$MANUAL_OPERATIONS"
-echo -e "\n------------------------------------------------------------------------\n"
+cat > "$INSTALL_DIR/bin/cxlb-toolchain-user-conf" <<EOF
+#!/bin/bash
+
+# ------------------------------------------------------------------------
+# script to be sourced by a user to configure its environment to use
+# the toolchain
+# ------------------------------------------------------------------------
+
+$SET_CXLB_TOOLCHAIN_ENV
+
+EOF
+
+cat <<EOF
+
+------------------------------------------------------------------------
+
+- look at, and run as root $INSTALL_DIR/bin/cxlb-toolchain-system-conf
+  for system-wide configurations to use the toolchain
+
+- source $INSTALL_DIR/bin/cxlb-toolchain-user-conf
+  for environment configuration to use the toolchain
+
+------------------------------------------------------------------------
+EOF
