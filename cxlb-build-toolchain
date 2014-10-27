@@ -204,6 +204,12 @@ skip_annoying_prompts() {
     done
 }
 
+find_files() {
+    DIR="$1" ; shift
+    FILES="$@"
+    find $DIR | grep -f <(echo "$FILES" | tr ' ' '\n' | sed 's@^@/@; s/$/$/; s/\([\.[\*]\|\]\)/\\\1/g')
+}
+
 NOCHECKOUT=1
 PULL=1
 NUTAQ_STEPS="xilinx digilent adp gr-cortexlab"
@@ -364,13 +370,9 @@ nogit_step "xilinx" && (
     ./batchxsetup --samplebatchscript "$TMPDIR/batchscript"
     sed -i -e "s&destination_dir=.*&destination_dir=$INSTALL_DIR/opt/Xilinx&" "$TMPDIR/batchscript"
     skip_annoying_prompts | ./batchxsetup --batch "$TMPDIR/batchscript"
-    # fix libstdc++.so.6 conflict
-    for BADLIB in $(find "$INSTALL_DIR/opt/Xilinx" -name libstdc++.so.6 -or -name libstdc++.so | grep lin64) ; do
-        GOODLIB=$(/sbin/ldconfig -p | grep libstdc++.so.6 | grep 64 | awk '{print $4}')
-        echo "fixing $(basename $BADLIB) $BADLIB -> $GOODLIB"
-        mv "$BADLIB" "$BADLIB.bak"
-        ln -s "$GOODLIB" "$BADLIB"
-    done
+    # fix libs shipped with xilinx conflicting with system libs
+    BADLIBS="libstdc++.so.6 libstdc++.so libmpfr.so.4 libgmp.so.7 libusb-1.0.so.0"
+    find_files $INSTALL_DIR/opt/Xilinx $BADLIBS | grep lin64 | xargs rm
     # fix perms
     chmod -R go-w "$INSTALL_DIR/opt/Xilinx"
 )
