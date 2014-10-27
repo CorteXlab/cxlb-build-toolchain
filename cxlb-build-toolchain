@@ -413,8 +413,9 @@ nogit_step "digilent" && (
     cp $DIGILENT_UTILITIES_PACKAGE/man/*.1 "$INSTALL_DIR/share/man/man1"
     # digilent plugin to xilinx labtool to enable use of HS2 with impact
     if [ ! -d "$DIGILENT_PLUGIN_PACKAGE" ] ; then tar xzf "${DIGILENT_PLUGIN_PACKAGE}.tar.gz" ; fi
-    mkdir -p $INSTALL_DIR/opt/Xilinx/*/LabTools/LabTools/lib/lin64/plugins/Digilent/libCseDigilent
-    cp $DIGILENT_PLUGIN_PACKAGE/ISE14x/plugin/* $INSTALL_DIR/opt/Xilinx/*/LabTools/LabTools/lib/lin64/plugins/Digilent/libCseDigilent
+    XILINX_PLUGIN_PATH=$(echo $INSTALL_DIR/opt/Xilinx/*/LabTools/LabTools/lib/lin64/plugins)
+    mkdir -p $XILINX_PLUGIN_PATH/Digilent/libCseDigilent
+    cp $DIGILENT_PLUGIN_PACKAGE/ISE14x/plugin/* $XILINX_PLUGIN_PATH/Digilent/libCseDigilent
 )
 
 # ------------------------------------------------------------------------
