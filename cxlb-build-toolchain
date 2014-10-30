@@ -462,8 +462,6 @@ for L in $(find "$INSTALL_DIR/opt/Xilinx" -path '*/common/lib/lin64') ; do ADDIT
 for L in $(find "$INSTALL_DIR/opt/Xilinx" -path '*/LabTools/lib/lin64') ; do ADDITIONAL_LIBS=$( echo -e "$L${ADDITIONAL_LIBS:+\n${ADDITIONAL_LIBS}}") ; done
 for L in $(find "$INSTALL_DIR/opt/Nutaq" -path '*/sdk/lib64') ; do ADDITIONAL_LIBS=$( echo -e "$L${ADDITIONAL_LIBS:+\n${ADDITIONAL_LIBS}}") ; done
 cat > "$INSTALL_DIR/etc/ld.so.conf.d/cxlb-toolchain" <<EOF
-#!/bin/bash
-
 # ------------------------------------------------------------------------
 # library search path configuration for cortexlab toolchain installed
 # in $INSTALL_DIR
