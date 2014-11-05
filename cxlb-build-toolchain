@@ -189,7 +189,7 @@ grc_build_hier_block() {
     # the following hack to fix what seems to be a strange bug of
     # grcc, which occurs only in some circumstances, where the python
     # imports are not correct
-    xalan -xsl $SCRIPTLOCATION/fix_xml.xsl -param pythondir "'$NEWPYTHONPATH'" -param modulename $STEM < $STEM.py.xml > $STEM.py.xml.tmp
+    xalan -xsl $SCRIPTLOCATION/fix_xml.xsl -param pythondir "'$NEWPYTHONPATH'" -param modulename "'$STEM'" < $STEM.py.xml > $STEM.py.xml.tmp
     mv $STEM.py.xml.tmp $STEM.py.xml
 
     cp $STEM.py "$NEWPYTHONPATH"
