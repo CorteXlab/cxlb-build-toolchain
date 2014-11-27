@@ -6,6 +6,13 @@ SCRIPTLOCATION=$(cd $(dirname "$0"); pwd)
 COMMANDLINE="$0 $@"
 BUILDTITLE="$(date -u) - $(uname -a) : $COMMANDLINE"
 
+XILINX_LABTOOL_PACKAGE="Xilinx_LabTools_14.7_1015_1"
+DIGILENT_RUNTIME_PACKAGE="digilent.adept.runtime_2.15.3-x86_64"
+DIGILENT_UTILITIES_PACKAGE="digilent.adept.utilities_2.1.1-x86_64"
+DIGILENT_PLUGIN_PACKAGE="libCseDigilent_2.5.2-x86_64"
+FTDI_DRIVER_PACKAGE="libftd2xx1.1.12"
+NUTAQ_ADP_PACKAGE="nutaq-adp6-microtca-sdk-6-5-0-1-amd64"
+
 usage() {
     cat <<EOF
 `basename $0` [options] <compile_dir> <install_dir>
@@ -56,6 +63,27 @@ Prior to running it you must:
 - to be able to build documentation, install packages:
 
   doxygen
+
+- for step xilinx you need to have
+
+  ${XILINX_LABTOOL_PACKAGE}.tar.gz
+
+  in <install_dir>/xilinx/
+
+- for step digilent you need to have
+
+  ${DIGILENT_RUNTIME_PACKAGE}.tar.gz
+  ${DIGILENT_UTILITIES_PACKAGE}.tar.gz
+  ${DIGILENT_PLUGIN_PACKAGE}.tar.gz
+  ${FTDI_DRIVER_PACKAGE}.tar.gz
+
+  in <install_dir>/digilent/
+
+- for step nutaq you need to have
+
+  ${NUTAQ_ADP_PACKAGE}.deb
+
+  in <install_dir>/nutaq/
 
 EOF
 }
@@ -259,12 +287,6 @@ BUNDLEOUT="$INSTALL_DIR/share/$(basename $0)/build.bundle"
 
 #COMMON_CMAKE_OPTS="-DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR"
 COMMON_CMAKE_OPTS="-DCMAKE_INSTALL_PREFIX=$INSTALL_DIR"
-XILINX_LABTOOL_PACKAGE="Xilinx_LabTools_14.7_1015_1"
-DIGILENT_RUNTIME_PACKAGE="digilent.adept.runtime_2.15.3-x86_64"
-DIGILENT_UTILITIES_PACKAGE="digilent.adept.utilities_2.1.1-x86_64"
-DIGILENT_PLUGIN_PACKAGE="libCseDigilent_2.5.2-x86_64"
-FTDI_DRIVER_PACKAGE="libftd2xx1.1.12"
-NUTAQ_ADP_PACKAGE="nutaq-adp6-microtca-sdk-6-5-0-1-amd64"
 
 if [ "$BUNDLEOUT" != "" ] ; then
     echo "# $BUILDTITLE" > "$BUNDLEOUT"
