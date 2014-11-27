@@ -3,6 +3,8 @@
 set -e
 
 SCRIPTLOCATION=$(cd $(dirname "$0"); pwd)
+COMMANDLINE="$0 $@"
+BUILDTITLE="$(date -u) - $(uname -a) : $COMMANDLINE"
 
 usage() {
     cat <<EOF
@@ -20,12 +22,12 @@ usage() {
                  $STEPS)
     -P : add nutaq steps ($NUTAQ_STEPS)
     -p : pull latest updates from remote git repos
-    -o <FILE> : output all packages versions to the bundle file <FILE>
     -i <FILE> : checkout packages versions from bundle file <FILE>
     -n : no build, only repository operations
     -N : no ckeckout from bundle file nor from defaults branch heads,
          do not touch the source repositories
     -c : clean build dir before build
+    -l : log toolchain build to <install_dir>/share/`basename $0`
     -h : this help
 
 This scripts packages the cortexlab toolchain. It is for linux-amd64
@@ -218,20 +220,20 @@ NOCHECKOUT=1
 PULL=1
 NUTAQ_STEPS="xilinx digilent adp gr-cortexlab"
 STEPS="uhd rtl-sdr gnuradio gr-iqbal bladerf hackrf gr-osmosdr uhd-firmware fft-web"
-BUNDLEOUT=""
 BUNDLEIN=""
 ONLYGIT=1
 CLEANBUILD=1
-while getopts "PNno:i:s:pch" OPT; do
+LOG=1
+while getopts "PNn:i:s:pclh" OPT; do
     case $OPT in
         P) STEPS="$STEPS $NUTAQ_STEPS" ;;
         N) NOCHECKOUT=0 ;;
         n) ONLYGIT=0 ;;
-        o) BUNDLEOUT=$(readlink -f "$OPTARG") ;;
         i) BUNDLEIN=$(readlink -f "$OPTARG") ;;
         s) STEPS="$OPTARG" ;;
         p) PULL=0 ;;
         c) CLEANBUILD=0 ;;
+        l) LOG=0;;
         h) usage ; exit 0 ;;
         *) usage ; exit 1 ;;
     esac
@@ -244,6 +246,17 @@ fi
 SOURCES_DIR="$(mkdir -p "$1" ; cd "$1" ; pwd)"
 INSTALL_DIR="$(mkdir -p "$2" ; cd "$2" ; pwd)"
 
+if [ $LOG -eq 0 ] ; then
+    mkdir -p "$INSTALL_DIR/share/$(basename $0)"
+    LOGFILE="$INSTALL_DIR/share/$(basename $0)/build.log"
+    echo "# $BUILDTITLE" > "$LOGFILE"
+    exec > >(tee -a "$LOGFILE")
+    exec 2>&1
+fi
+
+mkdir -p "$INSTALL_DIR/share/$(basename $0)"
+BUNDLEOUT="$INSTALL_DIR/share/$(basename $0)/build.bundle"
+
 #COMMON_CMAKE_OPTS="-DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR"
 COMMON_CMAKE_OPTS="-DCMAKE_INSTALL_PREFIX=$INSTALL_DIR"
 XILINX_LABTOOL_PACKAGE="Xilinx_LabTools_14.7_1015_1"
@@ -254,7 +267,7 @@ FTDI_DRIVER_PACKAGE="libftd2xx1.1.12"
 NUTAQ_ADP_PACKAGE="nutaq-adp6-microtca-sdk-6-5-0-1-amd64"
 
 if [ "$BUNDLEOUT" != "" ] ; then
-    cat /dev/null > "$BUNDLEOUT"
+    echo "# $BUILDTITLE" > "$BUNDLEOUT"
 fi
 
 export NEWPYTHONPATH="$INSTALL_DIR/"$(python -c "import sys,os; print os.sep.join(['lib', 'python' + sys.version[:3], 'dist-packages'])")
