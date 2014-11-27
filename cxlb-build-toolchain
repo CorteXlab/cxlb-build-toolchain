@@ -265,14 +265,14 @@ export PATH="$INSTALL_DIR/bin\${PATH:+:\${PATH}}"
 export MANPATH="$INSTALL_DIR/share/man\${MANPATH:+:\${MANPATH}}"
 export PKG_CONFIG_PATH="$INSTALL_DIR/lib/pkgconfig\${PKG_CONFIG_PATH:+:\${PKG_CONFIG_PATH}}"
 export CMAKE_MODULE_PATH="$INSTALL_DIR/lib/cmake\${CMAKE_MODULE_PATH:+:\${CMAKE_MODULE_PATH}}"
-for L in \$(find "$INSTALL_DIR/opt/Xilinx" -path '*/common/lib/lin64') ; do export LD_LIBRARY_PATH="\$L\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}" ; done
-for P in \$(find "$INSTALL_DIR/opt/Xilinx" -path '*/common/bin/lin64') ; do export PATH="\$P\${PATH:+:\${PATH}}" ; done
-for L in \$(find "$INSTALL_DIR/opt/Xilinx" -path '*/LabTools/lib/lin64') ; do export LD_LIBRARY_PATH="\$L\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}" ; done
-for P in \$(find "$INSTALL_DIR/opt/Xilinx" -path '*/LabTools/bin/lin64') ; do export PATH="\$P\${PATH:+:\${PATH}}" ; done
+for L in \$(find "$INSTALL_DIR/opt/Xilinx" -path '*/common/lib/lin64' 2>/dev/null) ; do export LD_LIBRARY_PATH="\$L\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}" ; done
+for P in \$(find "$INSTALL_DIR/opt/Xilinx" -path '*/common/bin/lin64' 2>/dev/null) ; do export PATH="\$P\${PATH:+:\${PATH}}" ; done
+for L in \$(find "$INSTALL_DIR/opt/Xilinx" -path '*/LabTools/lib/lin64' 2>/dev/null) ; do export LD_LIBRARY_PATH="\$L\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}" ; done
+for P in \$(find "$INSTALL_DIR/opt/Xilinx" -path '*/LabTools/bin/lin64' 2>/dev/null) ; do export PATH="\$P\${PATH:+:\${PATH}}" ; done
 export DIGILENT_ADEPT_CONF="$INSTALL_DIR/etc/digilent-adept.conf"
 export XLNX_DIGILENT_ADEPT_CONF="$INSTALL_DIR/etc/digilent-adept.conf"
-for L in \$(find "$INSTALL_DIR/opt/Nutaq" -path '*/sdk/lib64') ; do export LD_LIBRARY_PATH="\$L\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}" ; done
-for P in \$(find "$INSTALL_DIR/opt/Nutaq" -path '*/sdk/bin') ; do export PATH="\$P\${PATH:+:\${PATH}}" ; done
+for L in \$(find "$INSTALL_DIR/opt/Nutaq" -path '*/sdk/lib64' 2>/dev/null) ; do export LD_LIBRARY_PATH="\$L\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}" ; done
+for P in \$(find "$INSTALL_DIR/opt/Nutaq" -path '*/sdk/bin' 2>/dev/null) ; do export PATH="\$P\${PATH:+:\${PATH}}" ; done
 EOF
 )
 
@@ -458,9 +458,9 @@ git_step "gr-cortexlab" "https://github.com/CorteXlab/gr-cortexlab.git" "master"
 mkdir -p "$INSTALL_DIR/etc/ld.so.conf.d"
 
 ADDITIONAL_LIBS=""
-for L in $(find "$INSTALL_DIR/opt/Xilinx" -path '*/common/lib/lin64') ; do ADDITIONAL_LIBS=$( echo -e "$L${ADDITIONAL_LIBS:+\n${ADDITIONAL_LIBS}}") ; done
-for L in $(find "$INSTALL_DIR/opt/Xilinx" -path '*/LabTools/lib/lin64') ; do ADDITIONAL_LIBS=$( echo -e "$L${ADDITIONAL_LIBS:+\n${ADDITIONAL_LIBS}}") ; done
-for L in $(find "$INSTALL_DIR/opt/Nutaq" -path '*/sdk/lib64') ; do ADDITIONAL_LIBS=$( echo -e "$L${ADDITIONAL_LIBS:+\n${ADDITIONAL_LIBS}}") ; done
+for L in $(find "$INSTALL_DIR/opt/Xilinx" -path '*/common/lib/lin64' 2>/dev/null) ; do ADDITIONAL_LIBS=$( echo -e "$L${ADDITIONAL_LIBS:+\n${ADDITIONAL_LIBS}}") ; done
+for L in $(find "$INSTALL_DIR/opt/Xilinx" -path '*/LabTools/lib/lin64' 2>/dev/null) ; do ADDITIONAL_LIBS=$( echo -e "$L${ADDITIONAL_LIBS:+\n${ADDITIONAL_LIBS}}") ; done
+for L in $(find "$INSTALL_DIR/opt/Nutaq" -path '*/sdk/lib64' 2>/dev/null) ; do ADDITIONAL_LIBS=$( echo -e "$L${ADDITIONAL_LIBS:+\n${ADDITIONAL_LIBS}}") ; done
 cat > "$INSTALL_DIR/etc/ld.so.conf.d/cxlb-toolchain" <<EOF
 # ------------------------------------------------------------------------
 # library search path configuration for cortexlab toolchain installed
