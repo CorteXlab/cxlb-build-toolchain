@@ -551,29 +551,25 @@ ldconfig
 # - rtl-sdr:
 
 if [ -f "$INSTALL_DIR/etc/udev/rules.d/rtl-sdr.rules" ] ; then
-  mv "/etc/udev/rules.d/rtl-sdr.rules" "/etc/udev/rules.d/rtl-sdr.rules.bak"
-  cp "$INSTALL_DIR/udev/rules.d/rtl-sdr.rules" "/etc/udev/rules.d/"
+  cp "$INSTALL_DIR/etc/udev/rules.d/rtl-sdr.rules" "/etc/udev/rules.d/"
 fi
 
 # - bladeRF:
 
 if [ -f "$INSTALL_DIR/etc/udev/rules.d/88-nuand.rules" ] ; then
-  mv "/etc/udev/rules.d/88-nuand.rules" "/etc/udev/rules.d/88-nuand.rules.bak"
-  cp "$INSTALL_DIR/udev/rules.d/88-nuand.rules" "/etc/udev/rules.d/"
+  cp "$INSTALL_DIR/etc/udev/rules.d/88-nuand.rules" "/etc/udev/rules.d/"
 fi
 
 # - hackrf:
 
 if [ -f "$INSTALL_DIR/etc/udev/rules.d/53-hackrf.rules" ] ; then
-  mv "/etc/udev/rules.d/53-hackrf.rules" "/etc/udev/rules.d/53-hackrf.rules.bak"
-  cp "$INSTALL_DIR/udev/rules.d/53-hackrf.rules" "/etc/udev/rules.d/"
+  cp "$INSTALL_DIR/etc/udev/rules.d/53-hackrf.rules" "/etc/udev/rules.d/"
 fi
 
 # - digilent HS2:
 
 if [ -f "$INSTALL_DIR/etc/udev/rules.d/52-digilent-usb.rules" ] ; then
-  mv "/etc/udev/rules.d/52-digilent-usb.rules" "/etc/udev/rules.d/52-digilent-usb.rules.bak"
-  cp "$INSTALL_DIR/udev/rules.d/52-digilent-usb.rules" "/etc/udev/rules.d/"
+  cp "$INSTALL_DIR/etc/udev/rules.d/52-digilent-usb.rules" "/etc/udev/rules.d/"
 fi
 
 # - if any udev rule was modified or added, reload rules:
