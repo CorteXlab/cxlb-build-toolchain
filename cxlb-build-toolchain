@@ -438,7 +438,7 @@ nogit_step "digilent" && (
     #         tar xzf "../${FTDI_DRIVER_PACKAGE}.tar.gz"
     #     )
     # fi
-    # FTDILIB=$FTDI_DRIVER_PACKAGE/release/build/x86_64/libftd2xx.so.*
+    # FTDILIB=$(echo $FTDI_DRIVER_PACKAGE/release/build/x86_64/libftd2xx.so.*)
     # mkdir -p "$INSTALL_DIR/lib"
     # cp $FTDILIB "$INSTALL_DIR/lib"
     # ( cd "$INSTALL_DIR/lib" ; ln -fs $(basename $FTDILIB) libftd2xx.so )
@@ -448,7 +448,7 @@ nogit_step "digilent" && (
     (
         cd "$DIGILENT_RUNTIME_PACKAGE"
         # FTDI2XX lib
-        FTDILIB=ftdi.drivers_*/lib64/libftd2xx.so.*
+        FTDILIB=$(echo ftdi.drivers_*/lib64/libftd2xx.so.*)
         mkdir -p "$INSTALL_DIR/lib"
         cp $FTDILIB "$INSTALL_DIR/lib"
         ( cd "$INSTALL_DIR/lib" ; ln -fs $(basename $FTDILIB) libftd2xx.so )
