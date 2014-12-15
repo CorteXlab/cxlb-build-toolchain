@@ -277,7 +277,7 @@ INSTALL_DIR="$(mkdir -p "$2" ; cd "$2" ; pwd)"
 if [ $LOG -eq 0 ] ; then
     mkdir -p "$INSTALL_DIR/share/$(basename $0)"
     LOGFILE="$INSTALL_DIR/share/$(basename $0)/build.log"
-    echo "# $BUILDTITLE" > "$LOGFILE"
+    echo "# $BUILDTITLE" >> "$LOGFILE"
     exec > >(tee -a "$LOGFILE")
     exec 2>&1
 fi
