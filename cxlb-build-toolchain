@@ -144,6 +144,7 @@ update_git() {
         popd > /dev/null
     fi
     if [ "$BUNDLEOUT" != "" ] ; then
+        sed -i "/^$DIR=/d" "$BUNDLEOUT"
         echo "$DIR="$(get_tag "$DIR") >> "$BUNDLEOUT"
     fi
 }
@@ -287,7 +288,7 @@ BUNDLEOUT="$INSTALL_DIR/share/$(basename $0)/build.bundle"
 COMMON_CMAKE_OPTS="-DCMAKE_INSTALL_PREFIX=$INSTALL_DIR"
 
 if [ "$BUNDLEOUT" != "" ] ; then
-    echo "# $BUILDTITLE" > "$BUNDLEOUT"
+    echo "# $BUILDTITLE" >> "$BUNDLEOUT"
 fi
 
 export NEWPYTHONPATH="$INSTALL_DIR/"$(python -c "import sys,os; print os.sep.join(['lib', 'python' + sys.version[:3], 'dist-packages'])")
