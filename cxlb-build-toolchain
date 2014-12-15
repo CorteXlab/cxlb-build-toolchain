@@ -34,7 +34,6 @@ usage() {
     -N : no ckeckout from bundle file nor from defaults branch heads,
          do not touch the source repositories
     -c : clean build dir before build
-    -l : log toolchain build to <install_dir>/share/`basename $0`
     -h : this help
 
 This scripts packages the cortexlab toolchain. It is for linux-amd64
@@ -251,8 +250,8 @@ STEPS="uhd rtl-sdr gnuradio gr-iqbal bladerf hackrf gr-osmosdr uhd-firmware fft-
 BUNDLEIN=""
 ONLYGIT=1
 CLEANBUILD=1
-LOG=1
-while getopts "PNn:i:s:pclh" OPT; do
+LOG=0
+while getopts "PNn:i:s:pch" OPT; do
     case $OPT in
         P) STEPS="$STEPS $NUTAQ_STEPS" ;;
         N) NOCHECKOUT=0 ;;
@@ -261,7 +260,6 @@ while getopts "PNn:i:s:pclh" OPT; do
         s) STEPS="$OPTARG" ;;
         p) PULL=0 ;;
         c) CLEANBUILD=0 ;;
-        l) LOG=0;;
         h) usage ; exit 0 ;;
         *) usage ; exit 1 ;;
     esac
