@@ -10,7 +10,7 @@ XILINX_LABTOOL_PACKAGE="Xilinx_LabTools_14.7_1015_1"
 DIGILENT_RUNTIME_PACKAGE="digilent.adept.runtime_2.15.3-x86_64"
 DIGILENT_UTILITIES_PACKAGE="digilent.adept.utilities_2.1.1-x86_64"
 DIGILENT_PLUGIN_PACKAGE="libCseDigilent_2.5.2-x86_64"
-FTDI_DRIVER_PACKAGE="libftd2xx1.1.12"
+#FTDI_DRIVER_PACKAGE="libftd2xx1.1.12"
 NUTAQ_ADP_PACKAGE="nutaq-adp6-microtca-sdk-6-5-0-1-amd64"
 
 usage() {
@@ -427,22 +427,34 @@ nogit_step "xilinx" && (
 # http://www.ftdichip.com/Drivers/D2XX.htm
 nogit_step "digilent" && (
     cd digilent
-    # FTDI driver
-    if [ ! -d "$FTDI_DRIVER_PACKAGE" ] ; then
-        (
-            mkdir "$FTDI_DRIVER_PACKAGE"
-            cd "$FTDI_DRIVER_PACKAGE"
-            tar xzf "../${FTDI_DRIVER_PACKAGE}.tar.gz"
-        )
-    fi
-    FTDILIB=$FTDI_DRIVER_PACKAGE/release/build/x86_64/libftd2xx.so.*
-    mkdir -p "$INSTALL_DIR/lib"
-    cp $FTDILIB "$INSTALL_DIR/lib"
-    ( cd "$INSTALL_DIR/lib" ; ln -fs $(basename $FTDILIB) libftd2xx.so )
-    # digilent runtime
+
+    # # FTDI driver
+    #
+    # Commented since current standalone FTDI (1.1.12) drivers does not work on debian squeeze,
+    # so we use version 1.0.4 shipped with digilent runtime 2.15.3
+    #
+    # if [ ! -d "$FTDI_DRIVER_PACKAGE" ] ; then
+    #     (
+    #         mkdir "$FTDI_DRIVER_PACKAGE"
+    #         cd "$FTDI_DRIVER_PACKAGE"
+    #         tar xzf "../${FTDI_DRIVER_PACKAGE}.tar.gz"
+    #     )
+    # fi
+    # FTDILIB=$FTDI_DRIVER_PACKAGE/release/build/x86_64/libftd2xx.so.*
+    # mkdir -p "$INSTALL_DIR/lib"
+    # cp $FTDILIB "$INSTALL_DIR/lib"
+    # ( cd "$INSTALL_DIR/lib" ; ln -fs $(basename $FTDILIB) libftd2xx.so )
+
+    # digilent runtime, including the FTDI driver shipped with it
     if [ ! -d "$DIGILENT_RUNTIME_PACKAGE" ] ; then tar xzf "${DIGILENT_RUNTIME_PACKAGE}.tar.gz" ; fi
     (
         cd "$DIGILENT_RUNTIME_PACKAGE"
+        # FTDI2XX lib
+        FTDILIB=ftdi.drivers_*/lib64/libftd2xx.so.*
+        mkdir -p "$INSTALL_DIR/lib"
+        cp $FTDILIB "$INSTALL_DIR/lib"
+        ( cd "$INSTALL_DIR/lib" ; ln -fs $(basename $FTDILIB) libftd2xx.so )
+        # digilent runtime
         mkdir -p "$INSTALL_DIR/etc"
         echo "$INSTALL_DIR/etc" | ./install.sh datapath=$INSTALL_DIR/share/digilent/data libpath=$INSTALL_DIR/lib sbinpath=$INSTALL_DIR/bin || true
     )
