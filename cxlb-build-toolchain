@@ -74,7 +74,6 @@ Prior to running it you must:
   ${DIGILENT_RUNTIME_PACKAGE}.tar.gz
   ${DIGILENT_UTILITIES_PACKAGE}.tar.gz
   ${DIGILENT_PLUGIN_PACKAGE}.tar.gz
-  ${FTDI_DRIVER_PACKAGE}.tar.gz
 
   in <install_dir>/digilent/
 
