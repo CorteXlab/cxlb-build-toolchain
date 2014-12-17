@@ -408,7 +408,8 @@ nogit_step "xilinx" && (
     sed -i -e "s&destination_dir=.*&destination_dir=$INSTALL_DIR/opt/Xilinx&" "$TMPDIR/batchscript"
     skip_annoying_prompts | ./batchxsetup --batch "$TMPDIR/batchscript"
     # fix libs shipped with xilinx conflicting with system libs
-    BADLIBS="libstdc++.so.6 libstdc++.so libmpfr.so.4 libgmp.so.7 libusb-1.0.so.0"
+    #BADLIBS="libstdc++.so.6.0.8 libstdc++.so.6 libstdc++.so libmpfr.so.4 libmpfr.so libgmp.so.7 libgmp.so libusb-1.0.so.0"
+    BADLIBS="libstdc++.so.* libmpfr.so.* libgmp.so.* libusb-1.0.so.*"
     find_files $INSTALL_DIR/opt/Xilinx $BADLIBS | grep lin64 | xargs rm
     # fix perms
     chmod -R go-w "$INSTALL_DIR/opt/Xilinx"
