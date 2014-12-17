@@ -506,7 +506,7 @@ ADDITIONAL_LIBS=""
 for L in $(find "$INSTALL_DIR/opt/Xilinx" -path '*/common/lib/lin64' 2>/dev/null) ; do ADDITIONAL_LIBS=$( echo -e "$L${ADDITIONAL_LIBS:+\n${ADDITIONAL_LIBS}}") ; done
 for L in $(find "$INSTALL_DIR/opt/Xilinx" -path '*/LabTools/lib/lin64' 2>/dev/null) ; do ADDITIONAL_LIBS=$( echo -e "$L${ADDITIONAL_LIBS:+\n${ADDITIONAL_LIBS}}") ; done
 for L in $(find "$INSTALL_DIR/opt/Nutaq" -path '*/sdk/lib64' 2>/dev/null) ; do ADDITIONAL_LIBS=$( echo -e "$L${ADDITIONAL_LIBS:+\n${ADDITIONAL_LIBS}}") ; done
-cat > "$INSTALL_DIR/etc/ld.so.conf.d/cxlb-toolchain" <<EOF
+cat > "$INSTALL_DIR/etc/ld.so.conf.d/cxlb-toolchain.conf" <<EOF
 # ------------------------------------------------------------------------
 # library search path configuration for cortexlab toolchain installed
 # in $INSTALL_DIR
@@ -525,7 +525,7 @@ cat > "$INSTALL_DIR/bin/cxlb-toolchain-system-conf" <<EOF
 # script to be run as root to perform system-wide configurations
 # ------------------------------------------------------------------------
 
-cp $INSTALL_DIR/etc/ld.so.conf.d/cxlb-toolchain /etc/ld.so.conf.d/
+ln -fs $INSTALL_DIR/etc/ld.so.conf.d/cxlb-toolchain.conf /etc/ld.so.conf.d/cxlb-toolchain.conf
 ldconfig
 
 # - usrp:
@@ -561,25 +561,25 @@ ldconfig
 # - rtl-sdr:
 
 if [ -f "$INSTALL_DIR/etc/udev/rules.d/rtl-sdr.rules" ] ; then
-  cp "$INSTALL_DIR/etc/udev/rules.d/rtl-sdr.rules" "/etc/udev/rules.d/"
+  ln -fs "$INSTALL_DIR/etc/udev/rules.d/rtl-sdr.rules" "/etc/udev/rules.d/rtl-sdr.rules"
 fi
 
 # - bladeRF:
 
 if [ -f "$INSTALL_DIR/etc/udev/rules.d/88-nuand.rules" ] ; then
-  cp "$INSTALL_DIR/etc/udev/rules.d/88-nuand.rules" "/etc/udev/rules.d/"
+  ln -fs "$INSTALL_DIR/etc/udev/rules.d/88-nuand.rules" "/etc/udev/rules.d/88-nuand.rules"
 fi
 
 # - hackrf:
 
 if [ -f "$INSTALL_DIR/etc/udev/rules.d/53-hackrf.rules" ] ; then
-  cp "$INSTALL_DIR/etc/udev/rules.d/53-hackrf.rules" "/etc/udev/rules.d/"
+  ln -fs "$INSTALL_DIR/etc/udev/rules.d/53-hackrf.rules" "/etc/udev/rules.d/53-hackrf.rules"
 fi
 
 # - digilent HS2:
 
 if [ -f "$INSTALL_DIR/etc/udev/rules.d/52-digilent-usb.rules" ] ; then
-  cp "$INSTALL_DIR/etc/udev/rules.d/52-digilent-usb.rules" "/etc/udev/rules.d/"
+  ln -fs "$INSTALL_DIR/etc/udev/rules.d/52-digilent-usb.rules" "/etc/udev/rules.d/52-digilent-usb.rules"
 fi
 
 # - if any udev rule was modified or added, reload rules:
