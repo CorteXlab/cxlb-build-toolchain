@@ -124,25 +124,32 @@ update_git() {
     DIR=$(basename "$REPO")
     echo "### update_git from $REPO in $(readlink -f $DIR)"
     if [ ! -d "$DIR" ] ; then
+        echo "### cloning $REPO in $DIR"
         git clone "$REPO" "$DIR"
     fi
     if [ "$NOCHECKOUT" != "0" ] ; then
+        echo "### checkout"
         pushd "$DIR" > /dev/null
         if [ "$BUNDLEIN" != "" ] ; then
+            echo "### getting tag for $DIR from $BUNDLEIN"
             TAG=$(sed -n "s/$DIR=\(.*\)/\1/p" "$BUNDLEIN")
             if [ "$TAG" == "" ] ; then
+                echo "### no tag so use default checkout: $DEFAULTCHECKOUT"
                 TAG="$DEFAULTCHECKOUT"
             fi
             git checkout "$TAG"
         else
+            echo "### use default checkout: $DEFAULTCHECKOUT"
             git checkout "$DEFAULTCHECKOUT"
         fi
         if [ $PULL -eq 0 ] ; then
+            echo "### pull"
             git pull
         fi
         popd > /dev/null
     fi
     if [ "$BUNDLEOUT" != "" ] ; then
+        echo "### output tag $(get_tag "$DIR") for $DIR to $BUNDLEOUT"
         sed -i "/^$DIR=/d" "$BUNDLEOUT"
         echo "$DIR="$(get_tag "$DIR") >> "$BUNDLEOUT"
     fi
@@ -156,14 +163,19 @@ cmake_build() {
     CMAKE_OPTS="$@"
     echo "### cmake_build in $BUILDDIR with options $COMMON_CMAKE_OPTS $CMAKE_OPTS"
     if [ "$CLEANBUILD" == "0" ] ; then
+        echo "### cleaning before build"
         rm -rf "$BUILDDIR"
     fi
     mkdir -p "$BUILDDIR"
     pushd "$BUILDDIR" > /dev/null
+    echo "### set environment"
     eval "$SET_CXLB_TOOLCHAIN_ENV"
+    echo "### cmake"
     cmake $COMMON_CMAKE_OPTS $CMAKE_OPTS ../
     #make VERBOSE=1
+    echo "### make"
     make
+    echo "### make install"
     make install
     popd > /dev/null
 }
@@ -208,19 +220,25 @@ grc_build_hier_block() {
     # param 1: grc filename
     GRC=$1
     STEM=${GRC%.grc}
+    echo "### build grc hier block $GRC"
+    echo "### set environment"
     eval "$SET_CXLB_TOOLCHAIN_ENV"
+    echo "### grc compilation"
     grcc -d . $STEM.grc
 
     # WARN: currently option -d does not work -> compiled .py and
     # .py.xml go in ~/.grc_gnuradio, hence the following hack
+    echo "### bad grc compilation output directory hack"
     cp ~/.grc_gnuradio/$STEM.py ~/.grc_gnuradio/$STEM.py.xml .
 
     # the following hack to fix what seems to be a strange bug of
     # grcc, which occurs only in some circumstances, where the python
     # imports are not correct
+    echo "### fix compiled grc imports"
     xalan -xsl $SCRIPTLOCATION/fix_xml.xsl -param pythondir "'$NEWPYTHONPATH'" -param modulename "'$STEM'" < $STEM.py.xml > $STEM.py.xml.tmp
     mv $STEM.py.xml.tmp $STEM.py.xml
 
+    echo "### install compiled grc .py and xml in gnuradio"
     cp $STEM.py "$NEWPYTHONPATH"
     cp $STEM.py.xml $INSTALL_DIR/share/gnuradio/grc/blocks/
 }
@@ -399,18 +417,27 @@ git_step "fft-web" "https://github.com/CorteXlab/fft-web.git" "master" && (
 nogit_step "xilinx" && (
     cd xilinx
     # rm previous install (or installer will refuse to proceed)
+    echo "### clean install dir"
     rm -rf "$INSTALL_DIR/opt/Xilinx"
     TMPDIR="$(mkdir -p tmp ; cd tmp ; pwd)"
     rm -f "$TMPDIR/batchscript"
-    if [ ! -d "$XILINX_LABTOOL_PACKAGE" ] ; then tar xf "${XILINX_LABTOOL_PACKAGE}.tar" ; fi
+    if [ ! -d "$XILINX_LABTOOL_PACKAGE" ] ; then
+        echo "### unpack xilinx"
+        tar xf "${XILINX_LABTOOL_PACKAGE}.tar"
+    fi
     cd "$XILINX_LABTOOL_PACKAGE/bin/lin64"
+    echo "### create install script"
     ./batchxsetup --samplebatchscript "$TMPDIR/batchscript"
+    echo "### patch install location in install script"
     sed -i -e "s&destination_dir=.*&destination_dir=$INSTALL_DIR/opt/Xilinx&" "$TMPDIR/batchscript"
+    echo "### install"
     skip_annoying_prompts | ./batchxsetup --batch "$TMPDIR/batchscript"
     # fix libs shipped with xilinx conflicting with system libs
+    echo "### fix conflicting libraries installed by xilinx"
     BADLIBS="libstdc++\.so.* libmpfr\.so.* libgmp\.so.* libusb-1.0\.so.*"
     find_files $INSTALL_DIR/opt/Xilinx $BADLIBS | grep lin64 | xargs rm
     # fix perms
+    echo "### fix permissions"
     chmod -R go-w "$INSTALL_DIR/opt/Xilinx"
 )
 
@@ -444,29 +471,43 @@ nogit_step "digilent" && (
     # ( cd "$INSTALL_DIR/lib" ; ln -fs $(basename $FTDILIB) libftd2xx.so )
 
     # digilent runtime, including the FTDI driver shipped with it
-    if [ ! -d "$DIGILENT_RUNTIME_PACKAGE" ] ; then tar xzf "${DIGILENT_RUNTIME_PACKAGE}.tar.gz" ; fi
+    if [ ! -d "$DIGILENT_RUNTIME_PACKAGE" ] ; then
+        echo "### unpack digilent runtime"
+        tar xzf "${DIGILENT_RUNTIME_PACKAGE}.tar.gz"
+    fi
     (
         cd "$DIGILENT_RUNTIME_PACKAGE"
         # FTDI2XX lib
         FTDILIB=$(echo ftdi.drivers_*/lib64/libftd2xx.so.*)
+        echo "### install libftd2xx $FTDILIB"
         mkdir -p "$INSTALL_DIR/lib"
         cp $FTDILIB "$INSTALL_DIR/lib"
         ( cd "$INSTALL_DIR/lib" ; ln -fs $(basename $FTDILIB) libftd2xx.so )
         # digilent runtime
+        echo "### install digilent runtime"
         mkdir -p "$INSTALL_DIR/etc"
         echo "$INSTALL_DIR/etc" | ./install.sh datapath=$INSTALL_DIR/share/digilent/data libpath=$INSTALL_DIR/lib sbinpath=$INSTALL_DIR/bin || true
     )
+    echo "### digilent udev rules"
     mkdir -p "$INSTALL_DIR/etc/udev/rules.d"
     cp "$SOURCES_DIR/digilent/$DIGILENT_RUNTIME_PACKAGE/52-digilent-usb.rules" "$INSTALL_DIR/etc/udev/rules.d/"
     # digilent utilities
-    if [ ! -d "$DIGILENT_UTILITIES_PACKAGE" ] ; then tar xzf "${DIGILENT_UTILITIES_PACKAGE}.tar.gz" ; fi
+    if [ ! -d "$DIGILENT_UTILITIES_PACKAGE" ] ; then
+        echo "### unpack digilent utilities"
+        tar xzf "${DIGILENT_UTILITIES_PACKAGE}.tar.gz"
+    fi
+    echo "### install digilent utilities"
     mkdir -p "$INSTALL_DIR/bin"
     cp $DIGILENT_UTILITIES_PACKAGE/bin64/* "$INSTALL_DIR/bin"
     mkdir -p "$INSTALL_DIR/share/man/man1"
     cp $DIGILENT_UTILITIES_PACKAGE/man/*.1 "$INSTALL_DIR/share/man/man1"
     # digilent plugin to xilinx labtool to enable use of HS2 with impact
-    if [ ! -d "$DIGILENT_PLUGIN_PACKAGE" ] ; then tar xzf "${DIGILENT_PLUGIN_PACKAGE}.tar.gz" ; fi
+    if [ ! -d "$DIGILENT_PLUGIN_PACKAGE" ] ; then
+        echo "### unpack digilent plugin"
+        tar xzf "${DIGILENT_PLUGIN_PACKAGE}.tar.gz"
+    fi
     XILINX_PLUGIN_PATH=$(echo $INSTALL_DIR/opt/Xilinx/*/LabTools/LabTools/lib/lin64/plugins)
+    echo "### install digilent plugin $XILINX_PLUGIN_PATH"
     mkdir -p $XILINX_PLUGIN_PATH/Digilent/libCseDigilent
     cp $DIGILENT_PLUGIN_PACKAGE/ISE14x/plugin/* $XILINX_PLUGIN_PATH/Digilent/libCseDigilent
 )
@@ -480,11 +521,14 @@ nogit_step "digilent" && (
 nogit_step "adp" && (
     cd nutaq
     # adp software tools µtca
+    echo "### unpack adp debian package"
     dpkg -x $NUTAQ_ADP_PACKAGE.deb $INSTALL_DIR
     # gr-nutaq
     # ~/opt/gnuradio.test.adp/opt/Nutaq/ADP6/ADP_MicroTCA/sdk/gnuradio/gr-nutaq
+    echo "### patch gr-nutaq cmake files with actual install location"
     sed -i -e "s*set(NUTAQ_SDKROOT \"/opt/Nutaq/ADP6/ADP_MicroTCA/sdk\")*set(NUTAQ_SDKROOT \"$INSTALL_DIR/opt/Nutaq/ADP6/ADP_MicroTCA/sdk\")*" $INSTALL_DIR/opt/Nutaq/ADP6/ADP_MicroTCA/sdk/gnuradio/gr-nutaq/lib/CMakeLists.txt
     sed -i -e "s*set(NUTAQ_SDKROOT \"/opt/Nutaq/ADP6/ADP_MicroTCA/sdk\")*set(NUTAQ_SDKROOT \"$INSTALL_DIR/opt/Nutaq/ADP6/ADP_MicroTCA/sdk\")*" $INSTALL_DIR/opt/Nutaq/ADP6/ADP_MicroTCA/sdk/gnuradio/gr-nutaq/swig/CMakeLists.txt
+    echo "### build gr-nutaq"
     cmake_build $INSTALL_DIR/opt/Nutaq/ADP6/ADP_MicroTCA/sdk/gnuradio/gr-nutaq/build -DNUTAQ_SDKROOT="$INSTALL_DIR/opt/Nutaq/ADP6/ADP_MicroTCA/sdk"
 )
 
@@ -500,6 +544,8 @@ git_step "gr-cortexlab" "https://github.com/CorteXlab/gr-cortexlab.git" "master"
 
 # ------------------------------------------------------------------------
 # generate conf files
+echo "### generate conf files"
+
 mkdir -p "$INSTALL_DIR/etc/ld.so.conf.d"
 
 ADDITIONAL_LIBS=""
