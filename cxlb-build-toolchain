@@ -571,7 +571,7 @@ cat > "$INSTALL_DIR/bin/cxlb-toolchain-system-conf" <<EOF
 # script to be run as root to perform system-wide configurations
 # ------------------------------------------------------------------------
 
-ln -fs $INSTALL_DIR/etc/ld.so.conf.d/cxlb-toolchain.conf /etc/ld.so.conf.d/cxlb-toolchain.conf
+cp "$INSTALL_DIR/etc/ld.so.conf.d/cxlb-toolchain.conf" "/etc/ld.so.conf.d/cxlb-toolchain.conf"
 ldconfig
 
 # - usrp:
@@ -607,25 +607,25 @@ ldconfig
 # - rtl-sdr:
 
 if [ -f "$INSTALL_DIR/etc/udev/rules.d/rtl-sdr.rules" ] ; then
-  ln -fs "$INSTALL_DIR/etc/udev/rules.d/rtl-sdr.rules" "/etc/udev/rules.d/rtl-sdr.rules"
+  cp "$INSTALL_DIR/etc/udev/rules.d/rtl-sdr.rules" "/etc/udev/rules.d/rtl-sdr.rules"
 fi
 
 # - bladeRF:
 
 if [ -f "$INSTALL_DIR/etc/udev/rules.d/88-nuand.rules" ] ; then
-  ln -fs "$INSTALL_DIR/etc/udev/rules.d/88-nuand.rules" "/etc/udev/rules.d/88-nuand.rules"
+  cp "$INSTALL_DIR/etc/udev/rules.d/88-nuand.rules" "/etc/udev/rules.d/88-nuand.rules"
 fi
 
 # - hackrf:
 
 if [ -f "$INSTALL_DIR/etc/udev/rules.d/53-hackrf.rules" ] ; then
-  ln -fs "$INSTALL_DIR/etc/udev/rules.d/53-hackrf.rules" "/etc/udev/rules.d/53-hackrf.rules"
+  cp "$INSTALL_DIR/etc/udev/rules.d/53-hackrf.rules" "/etc/udev/rules.d/53-hackrf.rules"
 fi
 
 # - digilent HS2:
 
 if [ -f "$INSTALL_DIR/etc/udev/rules.d/52-digilent-usb.rules" ] ; then
-  ln -fs "$INSTALL_DIR/etc/udev/rules.d/52-digilent-usb.rules" "/etc/udev/rules.d/52-digilent-usb.rules"
+  cp "$INSTALL_DIR/etc/udev/rules.d/52-digilent-usb.rules" "/etc/udev/rules.d/52-digilent-usb.rules"
 fi
 
 # - if any udev rule was modified or added, reload rules:
