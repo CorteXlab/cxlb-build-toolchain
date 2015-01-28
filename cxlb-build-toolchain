@@ -7,8 +7,8 @@ COMMANDLINE="$0 $@"
 BUILDTITLE="$(date -u) - $(uname -a) : $COMMANDLINE"
 
 XILINX_LABTOOL_PACKAGE="Xilinx_LabTools_14.7_1015_1"
-DIGILENT_RUNTIME_PACKAGE="digilent.adept.runtime_2.15.3-x86_64"
-DIGILENT_UTILITIES_PACKAGE="digilent.adept.utilities_2.1.1-x86_64"
+DIGILENT_RUNTIME_PACKAGE="digilent.adept.runtime_2.16.1-x86_64"
+DIGILENT_UTILITIES_PACKAGE="digilent.adept.utilities_2.2.1-x86_64"
 DIGILENT_PLUGIN_PACKAGE="libCseDigilent_2.5.2-x86_64"
 #FTDI_DRIVER_PACKAGE="libftd2xx1.1.12"
 NUTAQ_ADP_PACKAGE="nutaq-adp6-microtca-sdk-6-5-0-1-amd64"
@@ -443,8 +443,8 @@ nogit_step "xilinx" && (
 
 # ------------------------------------------------------------------------
 # digilent
-# download digilent.adept.runtime_2.15.3-x86_64.tar.gz and
-# digilent.adept.utilities_2.1.1-x86_64.tar.gz from
+# download digilent.adept.runtime_2.16.1-x86_64.tar.gz and
+# digilent.adept.utilities_2.2.1-x86_64.tar.gz from
 # http://www.digilentinc.com/Products/Detail.cfm?Prod=ADEPT2 and
 # libCseDigilent_2.5.2-x86_64.tar.gz from
 # http://www.digilentinc.com/Products/Detail.cfm?NavPath=2,66,768&Prod=DIGILENT-PLUGIN
