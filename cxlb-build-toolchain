@@ -57,7 +57,7 @@ Prior to running it you must:
   python-qwt5-qt4 cmake git-core wget libxi-dev python-docutils
   gtk2-engines-pixbuf r-base-dev python-tk liborc-0.4-0 liborc-0.4-dev
   libasound2-dev python-gtk2 libportaudio2 portaudio19-dev
-  ca-certificates xalan libpcap0.8-dev libmpfr4 libgmp10
+  ca-certificates xalan libpcap0.8-dev libmpfr4 libgmp10 expect
 
 - to be able to build documentation, install packages:
 
@@ -486,7 +486,7 @@ nogit_step "digilent" && (
         # digilent runtime
         echo "### install digilent runtime"
         mkdir -p "$INSTALL_DIR/etc"
-        echo "$INSTALL_DIR/etc" | ./install.sh datapath=$INSTALL_DIR/share/digilent/data libpath=$INSTALL_DIR/lib sbinpath=$INSTALL_DIR/bin || true
+        expect -c "set timeout 60 ; spawn ./install.sh datapath=$INSTALL_DIR/share/digilent/data libpath=$INSTALL_DIR/lib sbinpath=$INSTALL_DIR/bin ; expect \"Update existing link for\" { send \"y\r\" ; exp_continue } \"In which directory should the Adept Runtime Configuration file be installed?\" { send \"$INSTALL_DIR/etc\r\" ; exp_continue } ;"
     )
     echo "### digilent udev rules"
     mkdir -p "$INSTALL_DIR/etc/udev/rules.d"
