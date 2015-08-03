@@ -11,7 +11,7 @@ DEFAULT_DIGILENT_RUNTIME_PACKAGE="digilent.adept.runtime_2.16.1-x86_64"
 DEFAULT_DIGILENT_UTILITIES_PACKAGE="digilent.adept.utilities_2.2.1-x86_64"
 DEFAULT_DIGILENT_PLUGIN_PACKAGE="libCseDigilent_2.5.2-x86_64"
 #DEFAULT_FTDI_DRIVER_PACKAGE="libftd2xx1.1.12"
-DEFAULT_NUTAQ_ADP_PACKAGE="nutaq-adp6-microtca-sdk-6-5-0-1-amd64"
+DEFAULT_NUTAQ_ADP_PACKAGE="nutaq-adp6-microtca-sdk_6.6.0-2_amd64"
 
 usage() {
     cat <<EOF
@@ -429,6 +429,7 @@ git_step "fft-web" "https://github.com/CorteXlab/fft-web.git" "master" && (
 # Xilinx_LabTools_14.7_1015_1.tar from
 # http://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/design-tools/v2012_3---14_3.html
 # (need an account)
+# see http://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/design-tools.html
 step "xilinx" && (
     cd xilinx
     # rm previous install (or installer will refuse to proceed)
@@ -541,6 +542,7 @@ step "digilent" && (
 # ------------------------------------------------------------------------
 # adp
 # download adp µtca debian package from http://nutaq.com/en/support/latest-utca-edition:
+# http://nutaq.com/sites/default/files/files-support/utca-6-5-0/nutaq-adp6-microtca-sdk_6.6.0-2_amd64.deb
 # http://nutaq.com/sites/default/files/files-support/utca-6-5-0/nutaq-adp6-microtca-sdk-6-5-0-1-amd64.deb
 # http://nutaq.com/sites/default/files/files-support/utca-6-4-0/nutaq-adp6-microtca-sdk_6-4-0-2_amd64.deb
 #TODO: add pathes
