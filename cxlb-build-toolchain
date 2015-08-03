@@ -34,6 +34,7 @@ usage() {
     -N : no ckeckout from bundle file nor from defaults branch heads,
          do not touch the source repositories
     -c : clean build dir before build
+    -S : disable autodetection of num concurrent jobs for make, use 1
     -h : this help
 
 This scripts packages the cortexlab toolchain. It is for linux-amd64
@@ -186,7 +187,7 @@ cmake_build() {
     cmake $COMMON_CMAKE_OPTS $CMAKE_OPTS ../
     #make VERBOSE=1
     echo "### make"
-    make
+    make -j $MAKE_NUM_CONCURRENT_JOBS
     echo "### make install"
     make install
     popd > /dev/null
@@ -281,7 +282,8 @@ BUNDLEIN=""
 ONLYGIT=1
 CLEANBUILD=1
 LOG=0
-while getopts "PNn:i:s:pch" OPT; do
+MAKE_NUM_CONCURRENT_JOBS=$(getconf _NPROCESSORS_ONLN)
+while getopts "PNn:i:s:pcSh" OPT; do
     case $OPT in
         P) STEPS="$STEPS $NUTAQ_STEPS" ;;
         N) NOCHECKOUT=0 ;;
@@ -290,6 +292,7 @@ while getopts "PNn:i:s:pch" OPT; do
         s) STEPS="$OPTARG" ;;
         p) PULL=0 ;;
         c) CLEANBUILD=0 ;;
+        S) MAKE_NUM_CONCURRENT_JOBS=1 ;;
         h) usage ; exit 0 ;;
         *) usage ; exit 1 ;;
     esac
