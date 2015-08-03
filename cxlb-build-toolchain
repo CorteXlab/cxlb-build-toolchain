@@ -149,15 +149,18 @@ update_git() {
     echo "### update_git from $REPO in $(readlink -f $DIR)"
     if [ ! -d "$DIR" ] ; then
         echo "### cloning $REPO in $DIR"
-        git clone "$REPO" "$DIR"
+        git clone --recurse-submodules "$REPO" "$DIR"
+        git submodule update --init
     fi
     if [ "$NOCHECKOUT" != "0" ] ; then
         echo "### checkout"
         pushd "$DIR" > /dev/null
         git checkout $(load_tag "$DIR" "$DEFAULTCHECKOUT")
+        git submodule update --init
         if [ $PULL -eq 0 ] ; then
             echo "### pull"
-            git pull
+            git pull --recurse-submodules=on
+            git submodule update --init
         fi
         popd > /dev/null
     fi
