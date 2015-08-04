@@ -402,9 +402,7 @@ git_step "bladerf" "https://github.com/Nuand/bladeRF.git" "master" && (
 # hackrf
 # https://github.com/mossmann/hackrf
 git_step "hackrf" "https://github.com/mossmann/hackrf.git" "master" && (
-    cmake_build hackrf.git/host/build
-    mkdir -p "$INSTALL_DIR/etc/udev/rules.d"
-    cp "$SOURCES_DIR/hackrf.git/host/libhackrf/53-hackrf.rules" "$INSTALL_DIR/etc/udev/rules.d/"
+    cmake_build hackrf.git/host/build -DINSTALL_UDEV_RULES=ON -DUDEV_RULES_PATH="$INSTALL_DIR/etc/udev/rules.d/"
 )
 
 # ------------------------------------------------------------------------
