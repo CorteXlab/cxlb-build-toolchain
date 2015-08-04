@@ -58,7 +58,7 @@ Prior to running it you must:
   python-qwt5-qt4 cmake git-core wget libxi-dev python-docutils
   gtk2-engines-pixbuf r-base-dev python-tk liborc-0.4-0 liborc-0.4-dev
   libasound2-dev python-gtk2 libportaudio2 portaudio19-dev
-  ca-certificates xalan libpcap0.8-dev libmpfr4 libgmp10 expect
+  ca-certificates xalan libpcap0.8-dev libmpfr4 libgmp10 expect fxload
 
 - to be able to build documentation, install packages:
 
@@ -147,6 +147,7 @@ update_git() {
     REPO="$1"
     DEFAULTCHECKOUT="$2"
     DIR=$(basename "$REPO")
+    DIR=${DIR%.git}.git
     echo "### update_git from $REPO in $(readlink -f $DIR)"
     if [ ! -d "$DIR" ] ; then
         echo "### cloning $REPO in $DIR"
@@ -276,7 +277,7 @@ find_files() {
 
 NOCHECKOUT=1
 PULL=1
-NUTAQ_STEPS="xilinx digilent adp gr-cortexlab"
+NUTAQ_STEPS="xilinx xilinx-usb-driver digilent adp gr-cortexlab"
 STEPS="uhd rtl-sdr gnuradio gr-iqbal bladerf hackrf gr-osmosdr uhd-firmware fft-web"
 BUNDLEIN=""
 ONLYGIT=1
@@ -460,6 +461,24 @@ step "xilinx" && (
     # fix perms
     echo "### fix permissions"
     chmod -R go-w "$INSTALL_DIR/opt/Xilinx"
+)
+
+# ------------------------------------------------------------------------
+# xilinx-usb-driver
+# http://www.rmdir.de/~michael/xilinx/
+# git://git.zerfleddert.de/usb-driver
+# http://git.zerfleddert.de/cgi-bin/gitweb.cgi/usb-driver
+git_step "xilinx-usb-driver" "git://git.zerfleddert.de/usb-driver" "master" && (
+    cd usb-driver.git
+    echo "### compiling usb-driver"
+    make
+    echo "### copying libusb-driver.so to $INSTALL_DIR/lib/"
+    cp -a libusb-driver.so $INSTALL_DIR/lib/
+    echo "### generate $INSTALL_DIR/etc/udev/rules.d/libusb-driver.rules"
+    echo 'ACTION=="add", SUBSYSTEMS=="usb", ATTRS{idVendor}=="03fd", MODE="666"' > "$INSTALL_DIR/etc/udev/rules.d/libusb-driver.rules"
+    XILINX_CABLE_FIRMWARE_PATH=$(echo $INSTALL_DIR/opt/Xilinx/*/LabTools/LabTools/bin/lin64/)
+    echo "### copy and patch $INSTALL_DIR/etc/udev/rules.d/xusbdfwu.rules pointing to $XILINX_CABLE_FIRMWARE_PATH"
+    sed -e 's/TEMPNODE/tempnode/' -e 's/SYSFS/ATTRS/g' -e 's/BUS/SUBSYSTEMS/' -e "s%/usr/share/%$XILINX_CABLE_FIRMWARE_PATH%" "$XILINX_CABLE_FIRMWARE_PATH/xusbdfwu.rules" > "$INSTALL_DIR/etc/udev/rules.d/xusbdfwu.rules"
 )
 
 # ------------------------------------------------------------------------
@@ -655,6 +674,15 @@ if [ -f "$INSTALL_DIR/etc/udev/rules.d/53-hackrf.rules" ] ; then
   cp "$INSTALL_DIR/etc/udev/rules.d/53-hackrf.rules" "/etc/udev/rules.d/53-hackrf.rules"
 fi
 
+# - xilinx jtag usb cable
+
+if [ -f "$INSTALL_DIR/etc/udev/rules.d/libusb-driver.rules" ] ; then
+  cp "$INSTALL_DIR/etc/udev/rules.d/libusb-driver.rules" "/etc/udev/rules.d/libusb-driver.rules"
+fi
+if [ -f "$INSTALL_DIR/etc/udev/rules.d/xusbdfwu.rules" ] ; then
+  cp "$INSTALL_DIR/etc/udev/rules.d/xusbdfwu.rules" "/etc/udev/rules.d/xusbdfwu.rules"
+fi
+
 # - digilent HS2:
 
 if [ -f "$INSTALL_DIR/etc/udev/rules.d/52-digilent-usb.rules" ] ; then
@@ -677,6 +705,7 @@ cat > "$INSTALL_DIR/bin/cxlb-toolchain-user-conf" <<EOF
 # ------------------------------------------------------------------------
 
 $SET_CXLB_TOOLCHAIN_ENV
+export LD_PRELOAD="$INSTALL_DIR/lib/libusb-driver.so\${LD_PRELOAD:+:\${LD_PRELOAD}}"
 
 EOF
 
