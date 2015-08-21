@@ -52,7 +52,7 @@ Prior to running it you must:
   libfontconfig1-dev libxrender-dev libpulse-dev swig g++ automake
   autoconf libtool python-dev libfftw3-dev libcppunit-dev
   libboost-all-dev libusb-dev libusb-1.0-0-dev fort77 libsdl1.2-dev
-  python-wxgtk2.8 git-core libqt4-dev python-numpy ccache
+  python-wxgtk3.0 git-core libqt4-dev python-numpy ccache
   python-opengl libgsl0-dev python-cheetah python-lxml
   qt4-dev-tools libqwt5-qt4-dev libqwtplot3d-qt4-dev pyqt4-dev-tools
   python-qwt5-qt4 cmake git-core wget libxi-dev python-docutils
