@@ -64,7 +64,7 @@ Prior to running it you must:
 
 - to be able to build documentation, install packages:
 
-  doxygen
+  doxygen python-sphinx
 
 - for step xilinx you need to have
 
