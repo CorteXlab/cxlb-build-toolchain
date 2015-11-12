@@ -699,8 +699,9 @@ cat > "$INSTALL_DIR/bin/cxlb-toolchain-user-conf" <<EOF
 # ------------------------------------------------------------------------
 
 $SET_CXLB_TOOLCHAIN_ENV
-export LD_PRELOAD="$INSTALL_DIR/lib/libusb-driver.so\${LD_PRELOAD:+:\${LD_PRELOAD}}"
-
+if [ -f "$INSTALL_DIR/lib/libusb-driver.so" ] ; then
+  export LD_PRELOAD="$INSTALL_DIR/lib/libusb-driver.so\${LD_PRELOAD:+:\${LD_PRELOAD}}"
+fi
 EOF
 
 cat <<EOF
