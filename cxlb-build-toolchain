@@ -54,17 +54,21 @@ Prior to running it you must:
   autoconf libtool python-dev libfftw3-dev libcppunit-dev
   libboost-all-dev libusb-dev libusb-1.0-0-dev fort77 libsdl1.2-dev
   python-wxgtk3.0 git-core libqt4-dev python-numpy ccache
-  python-opengl libgsl0-dev python-cheetah python-lxml
-  qt4-dev-tools libqwt5-qt4-dev libqwtplot3d-qt4-dev pyqt4-dev-tools
-  python-qwt5-qt4 cmake git-core wget libxi-dev python-docutils
-  gtk2-engines-pixbuf r-base-dev python-tk liborc-0.4-0 liborc-0.4-dev
-  libasound2-dev python-gtk2 libportaudio2 portaudio19-dev
-  ca-certificates xalan libpcap0.8-dev libmpfr4 libgmp10 expect fxload
-  python-mako
+  python-opengl libgsl0-dev python-cheetah python-lxml qt4-dev-tools
+  libqwt5-qt4-dev libqwtplot3d-qt4-dev pyqt4-dev-tools python-qwt5-qt4
+  cmake git-core wget libxi-dev python-docutils gtk2-engines-pixbuf
+  r-base-dev python-tk liborc-0.4-0 liborc-0.4-dev libasound2-dev
+  python-gtk2 libportaudio2 portaudio19-dev ca-certificates xalan
+  libpcap0.8-dev libmpfr4 libgmp10 expect fxload python-mako
+  libcomedi-dev liblog4cpp5-dev
+
+  from experimental, get these packages:
+
+  thrift-compiler python-thrift libthrift-dev
 
 - to be able to build documentation, install packages:
 
-  doxygen python-sphinx
+  doxygen python-sphinx texlive
 
 - for step xilinx you need to have
 
