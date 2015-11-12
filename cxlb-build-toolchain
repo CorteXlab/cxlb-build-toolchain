@@ -236,7 +236,7 @@ step() {
     [ "$ONLYGIT" != "0" ] && base_step "$STEP"
 }
 
-grc_build_hier_block() {
+grc_build_block() {
     # build a gnuradio-companion hierarchical block
     # param 1: grc filename
     GRC="$1"
@@ -245,7 +245,11 @@ grc_build_hier_block() {
     echo "### set environment"
     eval "$SET_CXLB_TOOLCHAIN_ENV"
     echo "### grc compilation"
-    grcc -d . $STEM.grc
+    COUNT=1
+    until echo "### try $COUNT" && grcc -d . $STEM.grc || [ "$COUNT" -ge 20 ] ; do
+        COUNT=$((COUNT+1))
+    done
+    # compilation retried several times because grcc randomly fails since I added thrift libs for ctrlport :-/
 
     # WARN: currently option -d does not work -> compiled .py and
     # .py.xml go in ~/.grc_gnuradio, hence the following hack
@@ -433,7 +437,7 @@ step "uhd-firmware" && (
 # fft-web
 git_step "fft-web" "https://github.com/CorteXlab/fft-web.git" "master" && (
     cd fft-web.git/grc
-    grc_build_hier_block fft_web.grc
+    grc_build_block fft_web.grc
 )
 
 # ------------------------------------------------------------------------
@@ -588,7 +592,7 @@ git_step "gr-cortexlab" "https://github.com/CorteXlab/gr-cortexlab.git" "master"
     cmake_build gr-cortexlab.git/build
     cd gr-cortexlab.git/grc
     for GRC in *.grc ; do
-        grc_build_hier_block $GRC
+        grc_build_block $GRC
     done
 )
 
