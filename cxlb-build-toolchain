@@ -74,7 +74,7 @@ Prior to running it you must:
 
   ${DEFAULT_XILINX_LABTOOL_PACKAGE}.tar.gz
 
-  in <install_dir>/xilinx/
+  in <compile_dir>/xilinx/
 
 - for step digilent you need to have
 
@@ -83,13 +83,13 @@ Prior to running it you must:
   ${DEFAULT_DIGILENT_UTILITIES_PACKAGE}.tar.gz
   ${DEFAULT_DIGILENT_PLUGIN_PACKAGE}.tar.gz
 
-  in <install_dir>/digilent/
+  in <compile_dir>/digilent/
 
 - for step nutaq you need to have
 
   ${DEFAULT_NUTAQ_ADP_PACKAGE}.deb
 
-  in <install_dir>/nutaq/
+  in <compile_dir>/nutaq/
 
 EOF
 }
