@@ -7,8 +7,10 @@ COMMANDLINE="$0 $@"
 BUILDTITLE="$(date -u) - $(uname -a) : $COMMANDLINE"
 
 DEFAULT_XILINX_LABTOOL_PACKAGE="Xilinx_LabTools_14.7_1015_1"
-DEFAULT_DIGILENT_RUNTIME_PACKAGE="digilent.adept.runtime_2.16.1-x86_64"
-DEFAULT_DIGILENT_UTILITIES_PACKAGE="digilent.adept.utilities_2.2.1-x86_64"
+#DEFAULT_DIGILENT_RUNTIME_PACKAGE="digilent.adept.runtime_2.16.1-x86_64"
+#DEFAULT_DIGILENT_UTILITIES_PACKAGE="digilent.adept.utilities_2.2.1-x86_64"
+DEFAULT_DIGILENT_RUNTIME_PACKAGE="digilent.adept.runtime_2.16.1-2_amd64"
+DEFAULT_DIGILENT_UTILITIES_PACKAGE="digilent.adept.utilities_2.2.1-amd64"
 DEFAULT_DIGILENT_PLUGIN_PACKAGE="libCseDigilent_2.5.2-x86_64"
 DEFAULT_FTDI_DRIVER_PACKAGE="libftd2xx-x86_64-1.3.6"
 DEFAULT_NUTAQ_ADP_PACKAGE="nutaq-adp6-microtca-sdk_6.6.0-2_amd64"
@@ -496,8 +498,8 @@ git_step "xilinx-usb-driver" "git://git.zerfleddert.de/usb-driver" "master" && (
 
 # ------------------------------------------------------------------------
 # digilent
-# download digilent.adept.runtime_2.16.1-x86_64.tar.gz and
-# digilent.adept.utilities_2.2.1-x86_64.tar.gz from
+# download digilent.adept.runtime_2.16.1-2_amd64.deb and
+# digilent.adept.utilities_2.2.1-amd64.deb from
 # https://reference.digilentinc.com/digilent_adept_2#adept_2_for_linux and
 # libCseDigilent_2.5.2-x86_64.tar.gz from
 # https://reference.digilentinc.com/digilent_plugin_xilinx_tools
@@ -524,32 +526,71 @@ step "digilent" && (
     # digilent runtime
     DIGILENT_RUNTIME_PACKAGE=$(load_tag digilent_runtime $DEFAULT_DIGILENT_RUNTIME_PACKAGE)
     save_tag digilent_runtime "$DIGILENT_RUNTIME_PACKAGE"
+    if [ -f "$DIGILENT_RUNTIME_PACKAGE.tar.gz" ] ; then
+        USE_DIGILENT_RUNTIME_TGZ=0
+    else
+        USE_DIGILENT_RUNTIME_TGZ=1
+    fi
     if [ ! -d "$DIGILENT_RUNTIME_PACKAGE" ] ; then
         echo "### unpack digilent runtime"
-        tar xzf "${DIGILENT_RUNTIME_PACKAGE}.tar.gz"
+        if [ "$USE_DIGILENT_RUNTIME_TGZ" == "0" ] ; then
+            tar xzf "${DIGILENT_RUNTIME_PACKAGE}.tar.gz"
+        else
+            dpkg -x "${DIGILENT_RUNTIME_PACKAGE}.deb" "$DIGILENT_RUNTIME_PACKAGE"
+        fi
     fi
+    echo "### install digilent runtime"
     (
         cd "$DIGILENT_RUNTIME_PACKAGE"
-        # digilent runtime
-        echo "### install digilent runtime"
-        mkdir -p "$INSTALL_DIR/etc"
-        expect -c "set timeout 60 ; spawn ./install.sh datapath=$INSTALL_DIR/share/digilent/data libpath=$INSTALL_DIR/lib sbinpath=$INSTALL_DIR/sbin ; expect \"Update existing link for\" { send \"y\r\" ; exp_continue } \"In which directory should the Adept Runtime Configuration file be installed?\" { send \"$INSTALL_DIR/etc\r\" ; exp_continue } ;"
+        if [ "$USE_DIGILENT_RUNTIME_TGZ" == "0" ] ; then
+            mkdir -p "$INSTALL_DIR/etc" "$INSTALL_DIR/etc/udev/rules.d"
+            expect -c "set timeout 60 ; spawn ./install.sh datapath=$INSTALL_DIR/share/digilent/data libpath=$INSTALL_DIR/lib sbinpath=$INSTALL_DIR/sbin ; expect \"Update existing link for\" { send \"y\r\" ; exp_continue } \"In which directory should the Adept Runtime Configuration file be installed?\" { send \"$INSTALL_DIR/etc\r\" ; exp_continue } ;"
+            cp "52-digilent-usb.rules" "$INSTALL_DIR/etc/udev/rules.d/"
+            sed -i "s|/bin/dftdrvdtch|/sbin/dftdrvdtch|" "$INSTALL_DIR/etc/udev/rules.d/52-digilent-usb.rules"
+        else
+            mkdir -p "$INSTALL_DIR/lib" "$INSTALL_DIR/sbin" "$INSTALL_DIR/share" "$INSTALL_DIR/etc" "$INSTALL_DIR/etc/udev/rules.d"
+            cp -a usr/lib64/digilent/adept/* "$INSTALL_DIR/lib"
+            cp -a usr/sbin/* "$INSTALL_DIR/sbin"
+            cp -a usr/share/digilent "$INSTALL_DIR/share"
+            cp -a usr/share/doc "$INSTALL_DIR/share"
+            cp -a etc/digilent-adept.conf "$INSTALL_DIR/etc"
+            sed -i "s|^DigilentPath=.*\$|DigilentPath=$INSTALL_DIR/share/digilent|" "$INSTALL_DIR/etc/digilent-adept.conf"
+            sed -i "s|^DigilentDataPath=.*\$|DigilentDataPath=$INSTALL_DIR/share/digilent/adept/data|" "$INSTALL_DIR/etc/digilent-adept.conf"
+            cp -a etc/udev/rules.d/52-digilent-usb.rules "$INSTALL_DIR/etc/udev/rules.d"
+            sed -i "s|/usr/sbin/dftdrvdtch|$INSTALL_DIR/sbin/dftdrvdtch|" "$INSTALL_DIR/etc/udev/rules.d/52-digilent-usb.rules"
+        fi
     )
-    echo "### digilent udev rules"
-    mkdir -p "$INSTALL_DIR/etc/udev/rules.d"
-    cp "$SOURCES_DIR/digilent/$DIGILENT_RUNTIME_PACKAGE/52-digilent-usb.rules" "$INSTALL_DIR/etc/udev/rules.d/"
     # digilent utilities
     DIGILENT_UTILITIES_PACKAGE=$(load_tag digilent_utilities $DEFAULT_DIGILENT_UTILITIES_PACKAGE)
     save_tag digilent_utilities "$DIGILENT_UTILITIES_PACKAGE"
+    if [ -f "$DIGILENT_UTILITIES_PACKAGE.tar.gz" ] ; then
+        USE_DIGILENT_UTILITIES_TGZ=0
+    else
+        USE_DIGILENT_UTILITIES_TGZ=1
+    fi
     if [ ! -d "$DIGILENT_UTILITIES_PACKAGE" ] ; then
         echo "### unpack digilent utilities"
-        tar xzf "${DIGILENT_UTILITIES_PACKAGE}.tar.gz"
+        if [ "$USE_DIGILENT_UTILITIES_TGZ" == "0" ] ; then
+            tar xzf "${DIGILENT_UTILITIES_PACKAGE}.tar.gz"
+        else
+            dpkg -x "${DIGILENT_UTILITIES_PACKAGE}.deb" "$DIGILENT_UTILITIES_PACKAGE"
+        fi
     fi
     echo "### install digilent utilities"
-    mkdir -p "$INSTALL_DIR/bin"
-    cp $DIGILENT_UTILITIES_PACKAGE/bin64/* "$INSTALL_DIR/bin"
-    mkdir -p "$INSTALL_DIR/share/man/man1"
-    cp $DIGILENT_UTILITIES_PACKAGE/man/*.1 "$INSTALL_DIR/share/man/man1"
+    (
+        cd "$DIGILENT_UTILITIES_PACKAGE"
+        if [ "$USE_DIGILENT_UTILITIES_TGZ" == "0" ] ; then
+            mkdir -p "$INSTALL_DIR/bin" "$INSTALL_DIR/share/man/man1"
+            cp bin64/* "$INSTALL_DIR/bin"
+            cp man/*.1 "$INSTALL_DIR/share/man/man1"
+        else
+            mkdir -p "$INSTALL_DIR/bin" "$INSTALL_DIR/share"
+            cp -a usr/bin/* "$INSTALL_DIR/bin"
+            cp -a usr/share/digilent "$INSTALL_DIR/share"
+            cp -a usr/share/doc "$INSTALL_DIR/share"
+            cp -a usr/share/man "$INSTALL_DIR/share"
+        fi
+    )
     # digilent plugin to xilinx labtool to enable use of HS2 with impact
     DIGILENT_PLUGIN_PACKAGE=$(load_tag digilent_plugin $DEFAULT_DIGILENT_PLUGIN_PACKAGE)
     save_tag digilent_plugin "$DIGILENT_PLUGIN_PACKAGE"
