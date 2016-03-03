@@ -549,7 +549,7 @@ step "digilent" && (
             sed -i "s|/bin/dftdrvdtch|/sbin/dftdrvdtch|" "$INSTALL_DIR/etc/udev/rules.d/52-digilent-usb.rules"
         else
             mkdir -p "$INSTALL_DIR/lib" "$INSTALL_DIR/sbin" "$INSTALL_DIR/share" "$INSTALL_DIR/etc" "$INSTALL_DIR/etc/udev/rules.d"
-            cp -a usr/lib64/digilent/adept/* "$INSTALL_DIR/lib"
+            GLOBIGNORE="libftd2xx.so*" cp -a usr/lib64/digilent/adept/* "$INSTALL_DIR/lib"
             cp -a usr/sbin/* "$INSTALL_DIR/sbin"
             cp -a usr/share/digilent "$INSTALL_DIR/share"
             cp -a usr/share/doc "$INSTALL_DIR/share"
