@@ -290,7 +290,7 @@ find_files() {
 
 NOCHECKOUT=1
 PULL=1
-NUTAQ_STEPS="xilinx xilinx-usb-driver digilent adp gr-cortexlab"
+NUTAQ_STEPS="xilinx digilent adp gr-cortexlab"
 STEPS="uhd rtl-sdr gnuradio gr-iqbal bladerf hackrf gr-osmosdr uhd-firmware fft-web"
 BUNDLEIN=""
 ONLYGIT=1
