@@ -528,8 +528,11 @@ step "digilent" && (
     save_tag digilent_runtime "$DIGILENT_RUNTIME_PACKAGE"
     if [ -f "$DIGILENT_RUNTIME_PACKAGE.tar.gz" ] ; then
         USE_DIGILENT_RUNTIME_TGZ=0
-    else
+    elif [ -f "$DIGILENT_RUNTIME_PACKAGE.deb" ] ; then
         USE_DIGILENT_RUNTIME_TGZ=1
+    else
+        echo "unable to find $DIGILENT_RUNTIME_PACKAGE.tar.gz or $DIGILENT_RUNTIME_PACKAGE.deb"
+        exit 1
     fi
     if [ ! -d "$DIGILENT_RUNTIME_PACKAGE" ] ; then
         echo "### unpack digilent runtime"
@@ -566,8 +569,11 @@ step "digilent" && (
     save_tag digilent_utilities "$DIGILENT_UTILITIES_PACKAGE"
     if [ -f "$DIGILENT_UTILITIES_PACKAGE.tar.gz" ] ; then
         USE_DIGILENT_UTILITIES_TGZ=0
-    else
+    elif [ -f "$DIGILENT_UTILITIES_PACKAGE.deb" ] ; then
         USE_DIGILENT_UTILITIES_TGZ=1
+    else
+        echo "unable to find $DIGILENT_UTILITIES_PACKAGE.tar.gz or $DIGILENT_UTILITIES_PACKAGE.deb"
+        exit 1
     fi
     if [ ! -d "$DIGILENT_UTILITIES_PACKAGE" ] ; then
         echo "### unpack digilent utilities"
