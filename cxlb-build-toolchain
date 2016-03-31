@@ -7,13 +7,13 @@ COMMANDLINE="$0 $@"
 BUILDTITLE="$(date -u) - $(uname -a) : $COMMANDLINE"
 
 DEFAULT_XILINX_LABTOOL_PACKAGE="Xilinx_LabTools_14.7_1015_1.tar"
+#DEFAULT_FTDI_DRIVER_PACKAGE="libftd2xx-x86_64-1.3.6.tgz"
 #DEFAULT_DIGILENT_RUNTIME_PACKAGE="digilent.adept.runtime_2.16.1-x86_64.tar.gz"
 #DEFAULT_DIGILENT_UTILITIES_PACKAGE="digilent.adept.utilities_2.2.1-x86_64.tar.gz"
+DEFAULT_FTDI_DRIVER_PACKAGE=""
 DEFAULT_DIGILENT_RUNTIME_PACKAGE="digilent.adept.runtime_2.16.1-2_amd64.deb"
 DEFAULT_DIGILENT_UTILITIES_PACKAGE="digilent.adept.utilities_2.2.1-amd64.deb"
 DEFAULT_DIGILENT_PLUGIN_PACKAGE="libCseDigilent_2.5.2-x86_64.tar.gz"
-DEFAULT_FTDI_DRIVER_PACKAGE="libftd2xx-x86_64-1.3.6.tgz"
-#DEFAULT_FTDI_DRIVER_PACKAGE=""
 DEFAULT_NUTAQ_ADP_PACKAGE="nutaq-adp6-microtca-sdk_6.6.0-2_amd64.deb"
 
 usage() {
@@ -545,7 +545,7 @@ step "digilent" && (
     fi
     echo "### install digilent runtime"
     (
-        if [ "$USE_DIGILENT_RUNTIME_TGZ" == "TGZ" ] ; then
+        if [ "$DIGILENT_RUNTIME_METHOD" == "TGZ" ] ; then
             cd "$DIGILENT_RUNTIME_PACKAGE.extract/*"
             mkdir -p "$INSTALL_DIR/etc" "$INSTALL_DIR/etc/udev/rules.d"
             expect -c "set timeout 60 ; spawn ./install.sh datapath=$INSTALL_DIR/share/digilent/data libpath=$INSTALL_DIR/lib sbinpath=$INSTALL_DIR/sbin ; expect \"Update existing link for\" { send \"y\r\" ; exp_continue } \"In which directory should the Adept Runtime Configuration file be installed?\" { send \"$INSTALL_DIR/etc\r\" ; exp_continue } ;"
