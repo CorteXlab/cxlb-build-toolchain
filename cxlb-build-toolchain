@@ -521,6 +521,9 @@ step "digilent" && (
         fi
         echo "### install FTDI driver"
         FTDILIB=$(echo ${FTDI_DRIVER_PACKAGE}.extract/release/build/libftd2xx.so.*)
+        if [[ ! -f "$FTDILIB" ]] ; then
+            FTDILIB=$(echo ${FTDI_DRIVER_PACKAGE}.extract/release/build/x86_64/libftd2xx.so.*)
+        fi
         mkdir -p "$INSTALL_DIR/lib"
         cp $FTDILIB "$INSTALL_DIR/lib"
         ( cd "$INSTALL_DIR/lib" ; ln -fs $(basename $FTDILIB) libftd2xx.so )
