@@ -546,7 +546,7 @@ step "digilent" && (
     echo "### install digilent runtime"
     (
         if [ "$DIGILENT_RUNTIME_METHOD" == "TGZ" ] ; then
-            cd "$DIGILENT_RUNTIME_PACKAGE.extract/*"
+            cd $DIGILENT_RUNTIME_PACKAGE.extract/*
             mkdir -p "$INSTALL_DIR/etc" "$INSTALL_DIR/etc/udev/rules.d"
             expect -c "set timeout 60 ; spawn ./install.sh datapath=$INSTALL_DIR/share/digilent/data libpath=$INSTALL_DIR/lib sbinpath=$INSTALL_DIR/sbin ; expect \"Update existing link for\" { send \"y\r\" ; exp_continue } \"In which directory should the Adept Runtime Configuration file be installed?\" { send \"$INSTALL_DIR/etc\r\" ; exp_continue } ;"
             cp "52-digilent-usb.rules" "$INSTALL_DIR/etc/udev/rules.d/"
@@ -589,7 +589,7 @@ step "digilent" && (
     echo "### install digilent utilities"
     (
         if [ "$DIGILENT_UTILITIES_METHOD" == "TGZ" ] ; then
-            cd "$DIGILENT_UTILITIES_PACKAGE.extract/*"
+            cd $DIGILENT_UTILITIES_PACKAGE.extract/*
             mkdir -p "$INSTALL_DIR/bin" "$INSTALL_DIR/share/man/man1"
             cp bin64/* "$INSTALL_DIR/bin"
             cp man/*.1 "$INSTALL_DIR/share/man/man1"
