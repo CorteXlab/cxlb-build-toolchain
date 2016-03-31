@@ -508,20 +508,22 @@ git_step "xilinx-usb-driver" "git://git.zerfleddert.de/usb-driver" "master" && (
 step "digilent" && (
     cd digilent
 
-    # # FTDI driver
-    # FTDI_DRIVER_PACKAGE=$(load_tag ftdi_driver $DEFAULT_FTDI_DRIVER_PACKAGE)
-    # save_tag ftdi_driver "$FTDI_DRIVER_PACKAGE"
-    # if [ ! -d "$FTDI_DRIVER_PACKAGE" ] ; then
-    #     (
-    #         mkdir "$FTDI_DRIVER_PACKAGE"
-    #         cd "$FTDI_DRIVER_PACKAGE"
-    #         tar xzf "../${FTDI_DRIVER_PACKAGE}.tgz"
-    #     )
-    # fi
-    # FTDILIB=$(echo $FTDI_DRIVER_PACKAGE/release/build/libftd2xx.so.*)
-    # mkdir -p "$INSTALL_DIR/lib"
-    # cp $FTDILIB "$INSTALL_DIR/lib"
-    # ( cd "$INSTALL_DIR/lib" ; ln -fs $(basename $FTDILIB) libftd2xx.so )
+    # FTDI driver
+    FTDI_DRIVER_PACKAGE=$(load_tag ftdi_driver $DEFAULT_FTDI_DRIVER_PACKAGE)
+    save_tag ftdi_driver "$FTDI_DRIVER_PACKAGE"
+    if [ "$FTDI_DRIVER_PACKAGE" != "" ] ; then
+        if [ ! -d "$FTDI_DRIVER_PACKAGE" ] ; then
+            (
+                mkdir "$FTDI_DRIVER_PACKAGE"
+                cd "$FTDI_DRIVER_PACKAGE"
+                tar xzf "../${FTDI_DRIVER_PACKAGE}.tgz"
+            )
+        fi
+        FTDILIB=$(echo $FTDI_DRIVER_PACKAGE/release/build/libftd2xx.so.*)
+        mkdir -p "$INSTALL_DIR/lib"
+        cp $FTDILIB "$INSTALL_DIR/lib"
+        ( cd "$INSTALL_DIR/lib" ; ln -fs $(basename $FTDILIB) libftd2xx.so )
+    fi
 
     # digilent runtime
     DIGILENT_RUNTIME_PACKAGE=$(load_tag digilent_runtime $DEFAULT_DIGILENT_RUNTIME_PACKAGE)
@@ -552,8 +554,11 @@ step "digilent" && (
             sed -i "s|/bin/dftdrvdtch|/sbin/dftdrvdtch|" "$INSTALL_DIR/etc/udev/rules.d/52-digilent-usb.rules"
         else
             mkdir -p "$INSTALL_DIR/lib" "$INSTALL_DIR/sbin" "$INSTALL_DIR/share" "$INSTALL_DIR/etc" "$INSTALL_DIR/etc/udev/rules.d"
-            # ( GLOBIGNORE="*/libftd2xx.so*" ; cp -a usr/lib64/digilent/adept/* "$INSTALL_DIR/lib" )
-            cp -a usr/lib64/digilent/adept/* "$INSTALL_DIR/lib"
+            if [ "$FTDI_DRIVER_PACKAGE" != "" ] ; then
+                ( GLOBIGNORE="*/libftd2xx.so*" ; cp -a usr/lib64/digilent/adept/* "$INSTALL_DIR/lib" )
+            else
+                cp -a usr/lib64/digilent/adept/* "$INSTALL_DIR/lib"
+            fi
             cp -a usr/sbin/* "$INSTALL_DIR/sbin"
             cp -a usr/share/digilent "$INSTALL_DIR/share"
             cp -a usr/share/doc "$INSTALL_DIR/share"
