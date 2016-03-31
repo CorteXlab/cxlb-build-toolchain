@@ -6,14 +6,15 @@ SCRIPTLOCATION=$(cd $(dirname "$0"); pwd)
 COMMANDLINE="$0 $@"
 BUILDTITLE="$(date -u) - $(uname -a) : $COMMANDLINE"
 
-DEFAULT_XILINX_LABTOOL_PACKAGE="Xilinx_LabTools_14.7_1015_1"
-#DEFAULT_DIGILENT_RUNTIME_PACKAGE="digilent.adept.runtime_2.16.1-x86_64"
-#DEFAULT_DIGILENT_UTILITIES_PACKAGE="digilent.adept.utilities_2.2.1-x86_64"
-DEFAULT_DIGILENT_RUNTIME_PACKAGE="digilent.adept.runtime_2.16.1-2_amd64"
-DEFAULT_DIGILENT_UTILITIES_PACKAGE="digilent.adept.utilities_2.2.1-amd64"
-DEFAULT_DIGILENT_PLUGIN_PACKAGE="libCseDigilent_2.5.2-x86_64"
-DEFAULT_FTDI_DRIVER_PACKAGE="libftd2xx-x86_64-1.3.6"
-DEFAULT_NUTAQ_ADP_PACKAGE="nutaq-adp6-microtca-sdk_6.6.0-2_amd64"
+DEFAULT_XILINX_LABTOOL_PACKAGE="Xilinx_LabTools_14.7_1015_1.tar"
+#DEFAULT_DIGILENT_RUNTIME_PACKAGE="digilent.adept.runtime_2.16.1-x86_64.tar.gz"
+#DEFAULT_DIGILENT_UTILITIES_PACKAGE="digilent.adept.utilities_2.2.1-x86_64.tar.gz"
+DEFAULT_DIGILENT_RUNTIME_PACKAGE="digilent.adept.runtime_2.16.1-2_amd64.deb"
+DEFAULT_DIGILENT_UTILITIES_PACKAGE="digilent.adept.utilities_2.2.1-amd64.deb"
+DEFAULT_DIGILENT_PLUGIN_PACKAGE="libCseDigilent_2.5.2-x86_64.tar.gz"
+DEFAULT_FTDI_DRIVER_PACKAGE="libftd2xx-x86_64-1.3.6.tgz"
+#DEFAULT_FTDI_DRIVER_PACKAGE=""
+DEFAULT_NUTAQ_ADP_PACKAGE="nutaq-adp6-microtca-sdk_6.6.0-2_amd64.deb"
 
 usage() {
     cat <<EOF
@@ -458,11 +459,12 @@ step "xilinx" && (
     rm -f "$TMPDIR/batchscript"
     XILINX_LABTOOL_PACKAGE=$(load_tag xilinx $DEFAULT_XILINX_LABTOOL_PACKAGE)
     save_tag xilinx "$XILINX_LABTOOL_PACKAGE"
-    if [ ! -d "$XILINX_LABTOOL_PACKAGE" ] ; then
+    if [ ! -d "${XILINX_LABTOOL_PACKAGE}.extract" ] ; then
         echo "### unpack xilinx"
-        tar xf "${XILINX_LABTOOL_PACKAGE}.tar"
+        mkdir "${XILINX_LABTOOL_PACKAGE}.extract"
+        tar -xC "${XILINX_LABTOOL_PACKAGE}.extract" -f "${XILINX_LABTOOL_PACKAGE}"
     fi
-    cd "$XILINX_LABTOOL_PACKAGE/bin/lin64"
+    cd "${XILINX_LABTOOL_PACKAGE}.extract/*/bin/lin64"
     echo "### create install script"
     ./batchxsetup --samplebatchscript "$TMPDIR/batchscript"
     echo "### patch install location in install script"
@@ -511,15 +513,14 @@ step "digilent" && (
     # FTDI driver
     FTDI_DRIVER_PACKAGE=$(load_tag ftdi_driver $DEFAULT_FTDI_DRIVER_PACKAGE)
     save_tag ftdi_driver "$FTDI_DRIVER_PACKAGE"
-    if [ "$FTDI_DRIVER_PACKAGE" != "" ] ; then
-        if [ ! -d "$FTDI_DRIVER_PACKAGE" ] ; then
-            (
-                mkdir "$FTDI_DRIVER_PACKAGE"
-                cd "$FTDI_DRIVER_PACKAGE"
-                tar xzf "../${FTDI_DRIVER_PACKAGE}.tgz"
-            )
+    if [ "${FTDI_DRIVER_PACKAGE}" != "" ] ; then
+        if [ ! -d "${FTDI_DRIVER_PACKAGE}.extract" ] ; then
+            echo "### unpack FTDI driver"
+            mkdir "${FTDI_DRIVER_PACKAGE}.extract"
+            tar -xzC "${FTDI_DRIVER_PACKAGE}.extract" -f "${FTDI_DRIVER_PACKAGE}"
         fi
-        FTDILIB=$(echo $FTDI_DRIVER_PACKAGE/release/build/libftd2xx.so.*)
+        echo "### install FTDI driver"
+        FTDILIB=$(echo ${FTDI_DRIVER_PACKAGE}.extract/release/build/libftd2xx.so.*)
         mkdir -p "$INSTALL_DIR/lib"
         cp $FTDILIB "$INSTALL_DIR/lib"
         ( cd "$INSTALL_DIR/lib" ; ln -fs $(basename $FTDILIB) libftd2xx.so )
@@ -528,31 +529,30 @@ step "digilent" && (
     # digilent runtime
     DIGILENT_RUNTIME_PACKAGE=$(load_tag digilent_runtime $DEFAULT_DIGILENT_RUNTIME_PACKAGE)
     save_tag digilent_runtime "$DIGILENT_RUNTIME_PACKAGE"
-    if [ -f "$DIGILENT_RUNTIME_PACKAGE.tar.gz" ] ; then
-        USE_DIGILENT_RUNTIME_TGZ=0
-    elif [ -f "$DIGILENT_RUNTIME_PACKAGE.deb" ] ; then
-        USE_DIGILENT_RUNTIME_TGZ=1
+    if [[ "$DIGILENT_RUNTIME_PACKAGE" == *.deb ]]; then
+        DIGILENT_RUNTIME_METHOD="DEB"
     else
-        echo "unable to find $DIGILENT_RUNTIME_PACKAGE.tar.gz or $DIGILENT_RUNTIME_PACKAGE.deb"
-        exit 1
+        DIGILENT_RUNTIME_METHOD="TGZ"
     fi
-    if [ ! -d "$DIGILENT_RUNTIME_PACKAGE" ] ; then
+    if [ ! -d "${DIGILENT_RUNTIME_PACKAGE}.extract" ] ; then
         echo "### unpack digilent runtime"
-        if [ "$USE_DIGILENT_RUNTIME_TGZ" == "0" ] ; then
-            tar xzf "${DIGILENT_RUNTIME_PACKAGE}.tar.gz"
+        if [ "$DIGILENT_RUNTIME_METHOD" == "TGZ" ] ; then
+            mkdir "${DIGILENT_RUNTIME_PACKAGE}.extract"
+            tar -xzC "${DIGILENT_RUNTIME_PACKAGE}.extract" -f "${DIGILENT_RUNTIME_PACKAGE}"
         else
-            dpkg -x "${DIGILENT_RUNTIME_PACKAGE}.deb" "$DIGILENT_RUNTIME_PACKAGE"
+            dpkg -x "${DIGILENT_RUNTIME_PACKAGE}" "$DIGILENT_RUNTIME_PACKAGE.extract"
         fi
     fi
     echo "### install digilent runtime"
     (
-        cd "$DIGILENT_RUNTIME_PACKAGE"
-        if [ "$USE_DIGILENT_RUNTIME_TGZ" == "0" ] ; then
+        if [ "$USE_DIGILENT_RUNTIME_TGZ" == "TGZ" ] ; then
+            cd "$DIGILENT_RUNTIME_PACKAGE.extract/*"
             mkdir -p "$INSTALL_DIR/etc" "$INSTALL_DIR/etc/udev/rules.d"
             expect -c "set timeout 60 ; spawn ./install.sh datapath=$INSTALL_DIR/share/digilent/data libpath=$INSTALL_DIR/lib sbinpath=$INSTALL_DIR/sbin ; expect \"Update existing link for\" { send \"y\r\" ; exp_continue } \"In which directory should the Adept Runtime Configuration file be installed?\" { send \"$INSTALL_DIR/etc\r\" ; exp_continue } ;"
             cp "52-digilent-usb.rules" "$INSTALL_DIR/etc/udev/rules.d/"
             sed -i "s|/bin/dftdrvdtch|/sbin/dftdrvdtch|" "$INSTALL_DIR/etc/udev/rules.d/52-digilent-usb.rules"
         else
+            cd "$DIGILENT_RUNTIME_PACKAGE.extract"
             mkdir -p "$INSTALL_DIR/lib" "$INSTALL_DIR/sbin" "$INSTALL_DIR/share" "$INSTALL_DIR/etc" "$INSTALL_DIR/etc/udev/rules.d"
             if [ "$FTDI_DRIVER_PACKAGE" != "" ] ; then
                 ( GLOBIGNORE="*/libftd2xx.so*" ; cp -a usr/lib64/digilent/adept/* "$INSTALL_DIR/lib" )
@@ -572,30 +572,29 @@ step "digilent" && (
     # digilent utilities
     DIGILENT_UTILITIES_PACKAGE=$(load_tag digilent_utilities $DEFAULT_DIGILENT_UTILITIES_PACKAGE)
     save_tag digilent_utilities "$DIGILENT_UTILITIES_PACKAGE"
-    if [ -f "$DIGILENT_UTILITIES_PACKAGE.tar.gz" ] ; then
-        USE_DIGILENT_UTILITIES_TGZ=0
-    elif [ -f "$DIGILENT_UTILITIES_PACKAGE.deb" ] ; then
-        USE_DIGILENT_UTILITIES_TGZ=1
+    if [[ "$DIGILENT_UTILITIES_PACKAGE" == *.deb ]]; then
+        DIGILENT_UTILITIES_METHOD="DEB"
     else
-        echo "unable to find $DIGILENT_UTILITIES_PACKAGE.tar.gz or $DIGILENT_UTILITIES_PACKAGE.deb"
-        exit 1
+        DIGILENT_UTILITIES_METHOD="TGZ"
     fi
-    if [ ! -d "$DIGILENT_UTILITIES_PACKAGE" ] ; then
+    if [ ! -d "$DIGILENT_UTILITIES_PACKAGE.extract" ] ; then
         echo "### unpack digilent utilities"
-        if [ "$USE_DIGILENT_UTILITIES_TGZ" == "0" ] ; then
-            tar xzf "${DIGILENT_UTILITIES_PACKAGE}.tar.gz"
+        if [ "$DIGILENT_UTILITIES_METHOD" == "TGZ" ] ; then
+            mkdir "${DIGILENT_UTILITIES_PACKAGE}.extract"
+            tar -xzC "${DIGILENT_UTILITIES_PACKAGE}.extract" -f "${DIGILENT_UTILITIES_PACKAGE}"
         else
-            dpkg -x "${DIGILENT_UTILITIES_PACKAGE}.deb" "$DIGILENT_UTILITIES_PACKAGE"
+            dpkg -x "${DIGILENT_UTILITIES_PACKAGE}" "$DIGILENT_UTILITIES_PACKAGE.extract"
         fi
     fi
     echo "### install digilent utilities"
     (
-        cd "$DIGILENT_UTILITIES_PACKAGE"
-        if [ "$USE_DIGILENT_UTILITIES_TGZ" == "0" ] ; then
+        if [ "$DIGILENT_UTILITIES_METHOD" == "TGZ" ] ; then
+            cd "$DIGILENT_UTILITIES_PACKAGE.extract/*"
             mkdir -p "$INSTALL_DIR/bin" "$INSTALL_DIR/share/man/man1"
             cp bin64/* "$INSTALL_DIR/bin"
             cp man/*.1 "$INSTALL_DIR/share/man/man1"
         else
+            cd "$DIGILENT_UTILITIES_PACKAGE.extract"
             mkdir -p "$INSTALL_DIR/bin" "$INSTALL_DIR/share"
             cp -a usr/bin/* "$INSTALL_DIR/bin"
             cp -a usr/share/digilent "$INSTALL_DIR/share"
@@ -606,14 +605,15 @@ step "digilent" && (
     # digilent plugin to xilinx labtool to enable use of HS2 with impact
     DIGILENT_PLUGIN_PACKAGE=$(load_tag digilent_plugin $DEFAULT_DIGILENT_PLUGIN_PACKAGE)
     save_tag digilent_plugin "$DIGILENT_PLUGIN_PACKAGE"
-    if [ ! -d "$DIGILENT_PLUGIN_PACKAGE" ] ; then
+    if [ ! -d "$DIGILENT_PLUGIN_PACKAGE.extract" ] ; then
         echo "### unpack digilent plugin"
-        tar xzf "${DIGILENT_PLUGIN_PACKAGE}.tar.gz"
+        mkdir "${DIGILENT_PLUGIN_PACKAGE}.extract"
+        tar -xzC "${DIGILENT_PLUGIN_PACKAGE}.extract" -f "${DIGILENT_PLUGIN_PACKAGE}"
     fi
     XILINX_PLUGIN_PATH=$(echo $INSTALL_DIR/opt/Xilinx/*/LabTools/LabTools/lib/lin64/plugins)
     echo "### install digilent plugin $XILINX_PLUGIN_PATH"
     mkdir -p $XILINX_PLUGIN_PATH/Digilent/libCseDigilent
-    cp $DIGILENT_PLUGIN_PACKAGE/ISE14x/plugin/* $XILINX_PLUGIN_PATH/Digilent/libCseDigilent
+    cp ${DIGILENT_PLUGIN_PACKAGE}.extract/*/ISE14x/plugin/* $XILINX_PLUGIN_PATH/Digilent/libCseDigilent
 )
 
 # ------------------------------------------------------------------------
@@ -629,7 +629,7 @@ step "adp" && (
     NUTAQ_ADP_PACKAGE=$(load_tag adp $DEFAULT_NUTAQ_ADP_PACKAGE)
     save_tag adp_plugin "$NUTAQ_ADP_PACKAGE"
     echo "### unpack adp debian package"
-    dpkg -x $NUTAQ_ADP_PACKAGE.deb $INSTALL_DIR
+    dpkg -x $NUTAQ_ADP_PACKAGE $INSTALL_DIR
     # gr-nutaq
     # ~/opt/gnuradio.test.adp/opt/Nutaq/ADP6/ADP_MicroTCA/sdk/gnuradio/gr-nutaq
     echo "### patch gr-nutaq cmake files with actual install location"
