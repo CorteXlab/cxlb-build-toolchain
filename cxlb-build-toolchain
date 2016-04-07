@@ -162,7 +162,7 @@ update_git() {
     if [ ! -d "$DIR" ] ; then
         echo "### cloning $REPO in $DIR"
         git clone --recurse-submodules "$REPO" "$DIR"
-        git submodule update --init
+        ( cd "$DIR" ; git submodule update --init )
     fi
     if [ "$NOCHECKOUT" != "0" ] ; then
         echo "### checkout"
