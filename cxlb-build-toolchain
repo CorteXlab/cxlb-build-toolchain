@@ -471,7 +471,7 @@ step "xilinx" && (
         mkdir "${XILINX_LABTOOL_PACKAGE}.extract"
         tar -xC "${XILINX_LABTOOL_PACKAGE}.extract" -f "${XILINX_LABTOOL_PACKAGE}"
     fi
-    cd "${XILINX_LABTOOL_PACKAGE}.extract/*/bin/lin64"
+    cd ${XILINX_LABTOOL_PACKAGE}.extract/*/bin/lin64
     echo "### create install script"
     ./batchxsetup --samplebatchscript "$TMPDIR/batchscript"
     echo "### patch install location in install script"
