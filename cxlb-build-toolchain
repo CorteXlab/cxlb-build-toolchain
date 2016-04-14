@@ -373,7 +373,7 @@ cd $SOURCES_DIR
 
 # ------------------------------------------------------------------------
 # uhd
-# http://code.ettus.com/redmine/ettus/projects/uhd/wiki
+# http://code.ettus.com/redmine/ettus/projects/uhd/wiki (maintenant: http://files.ettus.com/manual/)
 # http://code.ettus.com/redmine/ettus/projects/uhd/wiki/UHD_Build
 # install des dépendances
 # aptitude install libboost-all-dev libusb-1.0-0-dev python-cheetah doxygen python-docutils
