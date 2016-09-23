@@ -645,6 +645,8 @@ step "adp" && (
     echo "### patch gr-nutaq cmake files with actual install location"
     sed -i -e "s*set(NUTAQ_SDKROOT \"/opt/Nutaq/ADP6/ADP_MicroTCA/sdk\")*set(NUTAQ_SDKROOT \"$INSTALL_DIR/opt/Nutaq/ADP6/ADP_MicroTCA/sdk\")*" $INSTALL_DIR/opt/Nutaq/ADP6/ADP_MicroTCA/sdk/gnuradio/gr-nutaq/lib/CMakeLists.txt
     sed -i -e "s*set(NUTAQ_SDKROOT \"/opt/Nutaq/ADP6/ADP_MicroTCA/sdk\")*set(NUTAQ_SDKROOT \"$INSTALL_DIR/opt/Nutaq/ADP6/ADP_MicroTCA/sdk\")*" $INSTALL_DIR/opt/Nutaq/ADP6/ADP_MicroTCA/sdk/gnuradio/gr-nutaq/swig/CMakeLists.txt
+    echo "### replace GrPython.cmake shipped with ADP with the (more up to date) one from gnuradio"
+    cp -a $INSTALL_DIR/lib/cmake/gnuradio/GrPython.cmake $INSTALL_DIR/opt/Nutaq/ADP6/ADP_MicroTCA/sdk/gnuradio/gr-nutaq/cmake/Modules/GrPython.cmake
     echo "### build gr-nutaq"
     cmake_build $INSTALL_DIR/opt/Nutaq/ADP6/ADP_MicroTCA/sdk/gnuradio/gr-nutaq/build -DNUTAQ_SDKROOT="$INSTALL_DIR/opt/Nutaq/ADP6/ADP_MicroTCA/sdk"
 )
