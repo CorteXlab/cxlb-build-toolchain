@@ -66,7 +66,11 @@ Prior to running it you must:
   libmpfr4 libgmp10 expect fxload python-mako libcomedi-dev
   liblog4cpp5-dev
 
-  from experimental, get these packages:
+  If you want to experiment with the ctrlport feature of gnuradio,
+  which is currently not enabled by default in the cortexlab platform,
+  you also need to get (possibly from the testing / unstable /
+  experimental debian repositories, as thrift status in debian is
+  currently changing):
 
   thrift-compiler python-thrift libthrift-dev
 
