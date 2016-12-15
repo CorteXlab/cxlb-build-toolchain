@@ -641,7 +641,7 @@ step "adp" && (
     cd nutaq
     # adp software tools µtca
     NUTAQ_ADP_PACKAGE=$(load_tag adp $DEFAULT_NUTAQ_ADP_PACKAGE)
-    save_tag adp_plugin "$NUTAQ_ADP_PACKAGE"
+    save_tag adp "$NUTAQ_ADP_PACKAGE"
     echo "### unpack adp debian package"
     dpkg -x $NUTAQ_ADP_PACKAGE $INSTALL_DIR
     # gr-nutaq
