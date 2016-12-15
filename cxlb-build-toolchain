@@ -64,7 +64,7 @@ Prior to running it you must:
   python-tk liborc-0.4-0 liborc-0.4-dev libasound2-dev python-gtk2
   libportaudio2 portaudio19-dev ca-certificates xalan libpcap0.8-dev
   libmpfr4 libgmp10 expect fxload python-mako libcomedi-dev
-  liblog4cpp5-dev
+  liblog4cpp5-dev python-requests
 
   If you want to experiment with the ctrlport feature of gnuradio,
   which is currently not enabled by default in the cortexlab platform,
