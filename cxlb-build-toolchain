@@ -2,6 +2,18 @@
 
 set -e
 
+# The following global variable is used as a mean to return a result
+# (with shell convention 0 for True, !=0 for False) from a function
+# without interfering with the 'set -e' setting. The other (intuitive
+# and initially used) way to do that would be to call the function in
+# a test context, but this as the nasty side-effect that then the 'set
+# -e' setting is ignored in all the function's inner code. See for
+# example
+# http://unix.stackexchange.com/questions/65532/why-does-set-e-not-work-inside
+# Thus, this looks like an ugly hack but it's the only way I've found
+# so far to ensure that 'set -e' is enforced everywhere.
+DO_P=1
+
 SCRIPTLOCATION=$(cd $(dirname "$0"); pwd)
 COMMANDLINE="$0 $@"
 BUILDTITLE="$(date -u) - $(uname -a) : $COMMANDLINE"
@@ -224,7 +236,12 @@ base_step() {
     # checks if a step needs to be performed. If yes, display a step banner and return 0
     # param 1: step name
     STEP="$1"
-    do_step_p "$STEP" && package_banner "$STEP"
+    if do_step_p "$STEP" ; then
+        package_banner "$STEP"
+        DO_P=0
+    else
+        DO_P=1
+    fi
 }
 
 git_step() {
@@ -235,17 +252,24 @@ git_step() {
     STEP="$1"
     REPOS="$2"
     DEFAULTCHECKOUT="$3"
-    base_step "$STEP" && (
+    base_step "$STEP"
+    if [ "$DO_P" == 0 ] ; then
         update_git "$REPOS" "$DEFAULTCHECKOUT"
-        [ "$ONLYGIT" != "0" ]
-    )
+        if [ "$ONLYGIT" != "0" ] ; then
+            DO_P=0
+        else
+            DO_P=1
+        fi
+    fi
 }
 
 step() {
     # build step preamble for steps without git
     # param 1: step name
     STEP="$1"
-    [ "$ONLYGIT" != "0" ] && base_step "$STEP"
+    if [ "$ONLYGIT" != "0" ] ; then
+        base_step "$STEP"
+    fi
 }
 
 grc_build_block() {
@@ -382,18 +406,20 @@ cd $SOURCES_DIR
 # install des dépendances
 # aptitude install libboost-all-dev libusb-1.0-0-dev python-cheetah doxygen python-docutils
 # en réalité juste libusb-1.0-0-dev
-git_step "uhd" "git://github.com/EttusResearch/uhd.git" "master" && (
+git_step "uhd" "git://github.com/EttusResearch/uhd.git" "master"
+if [ "$DO_P" == 0 ] ; then
     cmake_build uhd.git/host/build
-)
+fi
 
 # ------------------------------------------------------------------------
 # rtl-sdr osmocom
 # http://sdr.osmocom.org/trac/wiki/rtl-sdr
-git_step "rtl-sdr" "git://git.osmocom.org/rtl-sdr.git" "master" && (
+git_step "rtl-sdr" "git://git.osmocom.org/rtl-sdr.git" "master"
+if [ "$DO_P" == 0 ] ; then
     cmake_build rtl-sdr.git/build
     mkdir -p "$INSTALL_DIR/etc/udev/rules.d/"
     cp "$SOURCES_DIR/rtl-sdr.git/rtl-sdr.rules" "$INSTALL_DIR/etc/udev/rules.d/"
-)
+fi
 
 # ------------------------------------------------------------------------
 # gnuradio
@@ -403,56 +429,68 @@ git_step "rtl-sdr" "git://git.osmocom.org/rtl-sdr.git" "master" && (
 # install des dépendances
 # aptitude install libfontconfig1-dev libxrender-dev libpulse-dev swig g++ automake autoconf libtool python-dev libfftw3-dev libcppunit-dev libboost-all-dev libusb-dev libusb-1.0-0-dev fort77 libsdl1.2-dev python-wxgtk2.8 git-core libqt4-dev python-numpy ccache python-opengl libgsl0-dev python-cheetah python-lxml doxygen qt4-dev-tools libusb-1.0-0-dev libqwt5-qt4-dev libqwtplot3d-qt4-dev pyqt4-dev-tools python-qwt5-qt4 cmake git-core wget libxi-dev python-docutils gtk2-engines-pixbuf r-base-dev python-tk liborc-0.4-0 liborc-0.4-dev libasound2-dev python-gtk2 libportaudio2 portaudio19-dev ca-certificates
 # en réalité juste libcppunit-dev fort77 libqt4-dev ccache libgsl0-dev qt4-dev-tools libqwt5-qt4-dev libqwtplot3d-qt4-dev pyqt4-dev-tools python-qwt5-qt4 r-base-dev liborc-0.4-dev portaudio19-dev
-git_step "gnuradio" "http://git.gnuradio.org/git/gnuradio.git" "maint" && (
+git_step "gnuradio" "http://git.gnuradio.org/git/gnuradio.git" "maint"
+if [ "$DO_P" == 0 ] ; then
     cmake_build gnuradio.git/build
     if [ "$BUILD_DOC" == "0" ] ; then
-        cd gnuradio.git/build
+        pushd gnuradio.git/build
         ./run_sphinx_build.sh
         cp -dR --preserve=all docs/sphinx/sphinx_out $INSTALL_DIR/share/doc/gnuradio-*
+        popd
     fi
-)
+fi
 
 # ------------------------------------------------------------------------
 # gr-iqbal
 # http://git.osmocom.org/gr-iqbal
-git_step "gr-iqbal" "git://git.osmocom.org/gr-iqbal.git" "master" && (
-    ( cd gr-iqbal.git ; git submodule init ; git submodule update )
+git_step "gr-iqbal" "git://git.osmocom.org/gr-iqbal.git" "master"
+if [ "$DO_P" == 0 ] ; then
+    pushd gr-iqbal.git
+    git submodule init
+    git submodule update
+    popd
     cmake_build gr-iqbal.git/build
-)
+fi
 
 # ------------------------------------------------------------------------
 # bladeRF
 # http://www.nuand.com/bladeRF
-git_step "bladerf" "https://github.com/Nuand/bladeRF.git" "master" && (
+git_step "bladerf" "https://github.com/Nuand/bladeRF.git" "master"
+if [ "$DO_P" == 0 ] ; then
     cmake_build bladeRF.git/host/build -DINSTALL_UDEV_RULES=ON -DUDEV_RULES_PATH="$INSTALL_DIR/etc/udev/rules.d/"
-)
+fi
 
 # ------------------------------------------------------------------------
 # hackrf
 # https://github.com/mossmann/hackrf
-git_step "hackrf" "https://github.com/mossmann/hackrf.git" "master" && (
+git_step "hackrf" "https://github.com/mossmann/hackrf.git" "master"
+if [ "$DO_P" == 0 ] ; then
     cmake_build hackrf.git/host/build -DINSTALL_UDEV_RULES=ON -DUDEV_RULES_PATH="$INSTALL_DIR/etc/udev/rules.d/"
-)
+fi
 
 # ------------------------------------------------------------------------
 # gr-osmosdr osmocom
 # http://sdr.osmocom.org/trac/wiki/GrOsmoSDR
-git_step "gr-osmosdr" "git://git.osmocom.org/gr-osmosdr.git" "master" && (
+git_step "gr-osmosdr" "git://git.osmocom.org/gr-osmosdr.git" "master"
+if [ "$DO_P" == 0 ] ; then
     cmake_build gr-osmosdr.git/build
-)
+fi
 
 # ------------------------------------------------------------------------
 # uhd firmware update
-step "uhd-firmware" && (
+step "uhd-firmware"
+if [ "$DO_P" == 0 ] ; then
     $INSTALL_DIR/lib/uhd/utils/uhd_images_downloader.py
-)
+fi
 
 # ------------------------------------------------------------------------
 # fft-web
-git_step "fft-web" "https://github.com/CorteXlab/fft-web.git" "master" && (
-    cd fft-web.git/grc
+git_step "fft-web" "https://github.com/CorteXlab/fft-web.git" "master"
+if [ "$DO_P" == 0 ] ; then
+    pushd fft-web.git/grc
     grc_build_block fft_web.grc
-)
+    popd
+fi
 
 # ------------------------------------------------------------------------
 # xilinx
@@ -461,8 +499,9 @@ git_step "fft-web" "https://github.com/CorteXlab/fft-web.git" "master" && (
 # http://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/design-tools/v2012_3---14_3.html
 # (need an account)
 # see http://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/design-tools.html
-step "xilinx" && (
-    cd xilinx
+step "xilinx"
+if [ "$DO_P" == 0 ] ; then
+    pushd xilinx
     # rm previous install (or installer will refuse to proceed)
     echo "### clean install dir"
     rm -rf "$INSTALL_DIR/opt/Xilinx"
@@ -489,15 +528,17 @@ step "xilinx" && (
     # fix perms
     echo "### fix permissions"
     chmod -R go-w "$INSTALL_DIR/opt/Xilinx"
-)
+    popd
+fi
 
 # ------------------------------------------------------------------------
 # xilinx-usb-driver
 # http://www.rmdir.de/~michael/xilinx/
 # git://git.zerfleddert.de/usb-driver
 # http://git.zerfleddert.de/cgi-bin/gitweb.cgi/usb-driver
-git_step "xilinx-usb-driver" "git://git.zerfleddert.de/usb-driver" "master" && (
-    cd usb-driver.git
+git_step "xilinx-usb-driver" "git://git.zerfleddert.de/usb-driver" "master"
+if [ "$DO_P" == 0 ] ; then
+    pushd usb-driver.git
     echo "### compiling usb-driver"
     make
     echo "### copying libusb-driver.so to $INSTALL_DIR/lib/"
@@ -507,7 +548,8 @@ git_step "xilinx-usb-driver" "git://git.zerfleddert.de/usb-driver" "master" && (
     XILINX_CABLE_FIRMWARE_PATH=$(echo $INSTALL_DIR/opt/Xilinx/*/LabTools/LabTools/bin/lin64/)
     echo "### copy and patch $INSTALL_DIR/etc/udev/rules.d/xusbdfwu.rules pointing to $XILINX_CABLE_FIRMWARE_PATH"
     sed -e 's/TEMPNODE/tempnode/' -e 's/SYSFS/ATTRS/g' -e 's/BUS/SUBSYSTEMS/' -e "s%/usr/share/%$XILINX_CABLE_FIRMWARE_PATH%" "$XILINX_CABLE_FIRMWARE_PATH/xusbdfwu.rules" > "$INSTALL_DIR/etc/udev/rules.d/xusbdfwu.rules"
-)
+    popd
+fi
 
 # ------------------------------------------------------------------------
 # digilent
@@ -518,8 +560,9 @@ git_step "xilinx-usb-driver" "git://git.zerfleddert.de/usb-driver" "master" && (
 # https://reference.digilentinc.com/digilent_plugin_xilinx_tools
 # and libftd2xx-x86_64-1.3.6.tgz from
 # http://www.ftdichip.com/Drivers/D2XX.htm
-step "digilent" && (
-    cd digilent
+step "digilent"
+if [ "$DO_P" == 0 ] ; then
+    pushd digilent
 
     # FTDI driver
     FTDI_DRIVER_PACKAGE=$(load_tag ftdi_driver $DEFAULT_FTDI_DRIVER_PACKAGE)
@@ -628,7 +671,8 @@ step "digilent" && (
     echo "### install digilent plugin $XILINX_PLUGIN_PATH"
     mkdir -p $XILINX_PLUGIN_PATH/Digilent/libCseDigilent
     cp ${DIGILENT_PLUGIN_PACKAGE}.extract/*/ISE14x/plugin/* $XILINX_PLUGIN_PATH/Digilent/libCseDigilent
-)
+    popd
+fi
 
 # ------------------------------------------------------------------------
 # adp
@@ -637,8 +681,9 @@ step "digilent" && (
 # http://nutaq.com/sites/default/files/files-support/utca-6-5-0/nutaq-adp6-microtca-sdk-6-5-0-1-amd64.deb
 # http://nutaq.com/sites/default/files/files-support/utca-6-4-0/nutaq-adp6-microtca-sdk_6-4-0-2_amd64.deb
 #TODO: add pathes
-step "adp" && (
-    cd nutaq
+step "adp"
+if [ "$DO_P" == 0 ] ; then
+    pushd nutaq
     # adp software tools µtca
     NUTAQ_ADP_PACKAGE=$(load_tag adp $DEFAULT_NUTAQ_ADP_PACKAGE)
     save_tag adp "$NUTAQ_ADP_PACKAGE"
@@ -653,17 +698,20 @@ step "adp" && (
     cp -a $INSTALL_DIR/lib/cmake/gnuradio/GrPython.cmake $INSTALL_DIR/opt/Nutaq/ADP6/ADP_MicroTCA/sdk/gnuradio/gr-nutaq/cmake/Modules/GrPython.cmake
     echo "### build gr-nutaq"
     cmake_build $INSTALL_DIR/opt/Nutaq/ADP6/ADP_MicroTCA/sdk/gnuradio/gr-nutaq/build -DNUTAQ_SDKROOT="$INSTALL_DIR/opt/Nutaq/ADP6/ADP_MicroTCA/sdk"
-)
+    popd
+fi
 
 # ------------------------------------------------------------------------
 # gr-cortexlab
-git_step "gr-cortexlab" "https://github.com/CorteXlab/gr-cortexlab.git" "master" && (
+git_step "gr-cortexlab" "https://github.com/CorteXlab/gr-cortexlab.git" "master"
+if [ "$DO_P" == 0 ] ; then
     cmake_build gr-cortexlab.git/build
-    cd gr-cortexlab.git/grc
+    pushd gr-cortexlab.git/grc
     for GRC in *.grc ; do
         grc_build_block $GRC
     done
-)
+    popd
+fi
 
 # ------------------------------------------------------------------------
 # generate conf files
