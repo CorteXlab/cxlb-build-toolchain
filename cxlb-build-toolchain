@@ -78,13 +78,19 @@ Prior to running it you must:
   libmpfr4 libgmp10 expect fxload python-mako libcomedi-dev
   liblog4cpp5-dev python-requests libgsl-dev libzmq3dev
 
-  If you want to experiment with the ctrlport feature of gnuradio,
-  which is currently not enabled by default in the cortexlab platform,
-  you also need to get (possibly from the testing / unstable /
+- to build ctrlport you need (possibly from the testing / unstable /
   experimental debian repositories, as thrift status in debian is
   currently changing):
 
   thrift-compiler python-thrift libthrift-dev
+
+- to build bokehgui, you need:
+
+  nodejs python-jinja2 python-dateutil python-yaml python-numpy
+  python-packaging python-six python-tornado python-futures
+  python-pandas python-psutil python-sphinx
+
+  and bokeh, currently not packaged, so install with pip.
 
 - to be able to build documentation, install packages:
 
@@ -438,6 +444,18 @@ if [ "$DO_P" == 0 ] ; then
         cp -dR --preserve=all docs/sphinx/sphinx_out $INSTALL_DIR/share/doc/gnuradio-*
         popd
     fi
+fi
+
+# ------------------------------------------------------------------------
+# gr-bokehgui
+# https://github.com/kartikp1995/gr-bokehgui
+# install des dépendances
+# aptitude install nodejs python-jinja2 python-dateutil python-yaml python-numpy python-packaging python-six python-tornado python-futures python-pandas python-psutil python-sphinx
+# pip install [--user] bokehgui
+# utiliser le fork mimbert, incluant un fix pour la dernière version de bokeh
+git_step "gr-bokehgui" "git@github.com:mimbert/gr-bokehgui.git" "master"
+if [ "$DO_P" == 0 ] ; then
+    cmake_build gr-bokehgui.git/build
 fi
 
 # ------------------------------------------------------------------------
