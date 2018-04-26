@@ -76,7 +76,7 @@ Prior to running it you must:
   python-tk liborc-0.4-0 liborc-0.4-dev libasound2-dev python-gtk2
   libportaudio2 portaudio19-dev ca-certificates xalan libpcap0.8-dev
   libmpfr4 libgmp10 expect fxload python-mako libcomedi-dev
-  liblog4cpp5-dev python-requests libgsl-dev libzmq3dev
+  liblog4cpp5-dev python-requests libgsl-dev libzmq3-dev
 
 - to build ctrlport you need (possibly from the testing / unstable /
   experimental debian repositories, as thrift status in debian is
