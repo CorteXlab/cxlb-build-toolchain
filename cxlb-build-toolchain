@@ -455,7 +455,7 @@ fi
 # aptitude install nodejs python-jinja2 python-dateutil python-yaml python-numpy python-packaging python-six python-tornado python-futures python-pandas python-psutil python-sphinx
 # pip install [--user] bokehgui
 # utiliser le fork mimbert, incluant un fix pour la dernière version de bokeh
-git_step "gr-bokehgui" "git@github.com:mimbert/gr-bokehgui.git" "master"
+git_step "gr-bokehgui" "https://github.com/mimbert/gr-bokehgui.git" "master"
 if [ "$DO_P" == 0 ] ; then
     cmake_build gr-bokehgui.git/build
 fi
