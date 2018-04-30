@@ -90,7 +90,9 @@ Prior to running it you must:
   python-packaging python-six python-tornado python-futures
   python-pandas python-psutil python-sphinx
 
-  and bokeh, currently not packaged, so install with pip.
+  and bokeh, currently not packaged, so install with pip, eg.:
+
+  $ pip install --user bokeh
 
 - to be able to build documentation, install packages:
 
