@@ -76,7 +76,8 @@ Prior to running it you must:
   python-tk liborc-0.4-0 liborc-0.4-dev libasound2-dev python-gtk2
   libportaudio2 portaudio19-dev ca-certificates xalan libpcap0.8-dev
   libmpfr4 libgmp10 expect fxload python-mako libcomedi-dev
-  liblog4cpp5-dev python-requests libgsl-dev libzmq3-dev
+  liblog4cpp5-dev python-requests libgsl-dev libzmq3-dev libgmp-dev
+  python-setuptools libitpp-dev python-scipy
 
 - to build ctrlport you need (possibly from the testing / unstable /
   experimental debian repositories, as thrift status in debian is
@@ -334,7 +335,8 @@ NOCHECKOUT=1
 FORCECHECKOUT=1
 PULL=1
 NUTAQ_STEPS="xilinx digilent adp gr-cortexlab"
-STEPS="uhd rtl-sdr gnuradio gr-iqbal bladerf hackrf gr-osmosdr uhd-firmware fft-web gr-bokehgui"
+STEPS="uhd rtl-sdr gnuradio gr-iqbal bladerf hackrf uhd-firmware fft-web gr-ofdm"
+# optional steps: gr-bokehgui gr-osmosdr
 BUNDLEIN=""
 ONLYGIT=1
 CLEANBUILD=1
@@ -414,7 +416,7 @@ cd $SOURCES_DIR
 # install des dépendances
 # aptitude install libboost-all-dev libusb-1.0-0-dev python-cheetah doxygen python-docutils
 # en réalité juste libusb-1.0-0-dev
-git_step "uhd" "git://github.com/EttusResearch/uhd.git" "maint"
+git_step "uhd" "git://github.com/EttusResearch/uhd.git" "master"
 if [ "$DO_P" == 0 ] ; then
     cmake_build uhd.git/host/build
 fi
@@ -437,7 +439,7 @@ fi
 # install des dépendances
 # aptitude install libfontconfig1-dev libxrender-dev libpulse-dev swig g++ automake autoconf libtool python-dev libfftw3-dev libcppunit-dev libboost-all-dev libusb-dev libusb-1.0-0-dev fort77 libsdl1.2-dev python-wxgtk2.8 git-core libqt4-dev python-numpy ccache python-opengl libgsl0-dev python-cheetah python-lxml doxygen qt4-dev-tools libusb-1.0-0-dev libqwt5-qt4-dev libqwtplot3d-qt4-dev pyqt4-dev-tools python-qwt5-qt4 cmake git-core wget libxi-dev python-docutils gtk2-engines-pixbuf r-base-dev python-tk liborc-0.4-0 liborc-0.4-dev libasound2-dev python-gtk2 libportaudio2 portaudio19-dev ca-certificates
 # en réalité juste libcppunit-dev fort77 libqt4-dev ccache libgsl0-dev qt4-dev-tools libqwt5-qt4-dev libqwtplot3d-qt4-dev pyqt4-dev-tools python-qwt5-qt4 r-base-dev liborc-0.4-dev portaudio19-dev
-git_step "gnuradio" "https://github.com/gnuradio/gnuradio.git" "master"
+git_step "gnuradio" "https://github.com/gnuradio/gnuradio.git" "maint-3.7"
 if [ "$DO_P" == 0 ] ; then
     cmake_build gnuradio.git/build
     if [ "$BUILD_DOC" == "0" ] ; then
@@ -494,6 +496,18 @@ fi
 git_step "gr-osmosdr" "git://git.osmocom.org/gr-osmosdr.git" "master"
 if [ "$DO_P" == 0 ] ; then
     cmake_build gr-osmosdr.git/build
+fi
+
+# ------------------------------------------------------------------------
+# gr-ofdm
+# https://github.com/rwth-ti/gr-ofdm
+git_step "gr-ofdm" "https://github.com/rwth-ti/gr-ofdm.git" "master"
+if [ "$DO_P" == 0 ] ; then
+    cmake_build gr-ofdm.git/build
+
+    # ugly hack to fix gr-ofdm wrongly putting python modules in bin/
+    # should improve it to only copy files belonging to gr-ofdm
+    mv "$INSTALL_DIR"/bin/*.py "$INSTALL_DIR/"$(python -c "import sys,os; print os.sep.join(['lib', 'python' + sys.version[:3], 'dist-packages', 'ofdm'])")
 fi
 
 # ------------------------------------------------------------------------
