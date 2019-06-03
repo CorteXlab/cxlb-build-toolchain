@@ -420,7 +420,7 @@ cd $SOURCES_DIR
 # en réalité juste libusb-1.0-0-dev
 git_step "uhd" "git://github.com/EttusResearch/uhd.git" "master"
 if [ "$DO_P" == 0 ] ; then
-    cmake_build uhd.git/host/build
+    cmake_build uhd.git/host/build -DENABLE_GPSD=ON
 fi
 
 # ------------------------------------------------------------------------
