@@ -77,7 +77,9 @@ Prior to running it you must:
   libportaudio2 portaudio19-dev ca-certificates xalan libpcap0.8-dev
   libmpfr4 libgmp10 expect fxload python-mako libcomedi-dev
   liblog4cpp5-dev python-requests libgsl-dev libzmq3-dev libgmp-dev
-  python-setuptools libitpp-dev python-scipy
+  python-setuptools libitpp-dev python-scipy libzmq5-dev libgps-dev
+  python3-mako python3-requests python3-numpy python3-setuptools
+  python-six python3-six
 
 - to build ctrlport you need (possibly from the testing / unstable /
   experimental debian repositories, as thrift status in debian is
