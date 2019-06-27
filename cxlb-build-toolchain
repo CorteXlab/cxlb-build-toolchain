@@ -81,6 +81,14 @@ Prior to running it you must:
   python3-mako python3-requests python3-numpy python3-setuptools
   python-six python3-six
 
+- adalm pluto:
+
+  for adalm pluto support, install packages:
+
+  libxml2 libxml2-dev bison flex cmake git libaio-dev libboost-all-dev
+  swig libiio-dev libiio-utils python-libiio python3-libiio
+  libad9361-dev
+
 - ctrlport (CURRENTLY BROKEN):
 
   to build ctrlport you need (possibly from the testing / unstable /
@@ -495,6 +503,19 @@ if [ "$DO_P" == 0 ] ; then
 fi
 
 # ------------------------------------------------------------------------
+# adalm-pluto
+# https://wiki.analog.com/university/tools/pluto
+# https://wiki.analog.com/resources/tools-software/linux-software/gnuradio
+git_step "pluto" "https://github.com/analogdevicesinc/gr-iio.git" "master"
+if [ "$DO_P" == 0 ] ; then
+    cmake_build gr-iio.git/build
+    mkdir -p "$INSTALL_DIR/etc/udev/rules.d/"
+    pushd "$INSTALL_DIR/etc/udev/rules.d/"
+    wget https://raw.githubusercontent.com/analogdevicesinc/plutosdr-fw/master/scripts/53-adi-plutosdr-usb.rules
+    popd
+fi
+
+# ------------------------------------------------------------------------
 # gr-osmosdr osmocom
 # http://sdr.osmocom.org/trac/wiki/GrOsmoSDR
 git_step "gr-osmosdr" "git://git.osmocom.org/gr-osmosdr.git" "master"
@@ -846,9 +867,16 @@ if [ -f "$INSTALL_DIR/etc/udev/rules.d/52-digilent-usb.rules" ] ; then
   cp "$INSTALL_DIR/etc/udev/rules.d/52-digilent-usb.rules" "/etc/udev/rules.d/52-digilent-usb.rules"
 fi
 
+# - Adalm-Pluto:
+
+if [ -f "$INSTALL_DIR/etc/udev/rules.d/53-adi-plutosdr-usb.rules" ] ; then
+  cp "$INSTALL_DIR/etc/udev/rules.d/53-adi-plutosdr-usb.rules" "/etc/udev/rules.d/53-adi-plutosdr-usb.rules"
+fi
+
 # - if any udev rule was modified or added, reload rules:
 
 udevadm control --reload-rules
+service udev restart || true
 
 EOF
 chmod a+x "$INSTALL_DIR/bin/cxlb-toolchain-system-conf"
