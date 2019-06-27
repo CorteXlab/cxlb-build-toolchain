@@ -51,7 +51,7 @@ usage() {
     -F : when git checkout is done, use option -f to force
     -c : clean build dir before build
     -S : disable autodetection of num concurrent jobs for make, use 1
-    -d : build docs
+    -d : build gnuradio sphinx doc (deprecated and broken)
     -h : this help
 
 This scripts packages the cortexlab toolchain. It is for linux-amd64
@@ -109,7 +109,19 @@ Prior to running it you must:
 
 - to be able to build documentation, install packages:
 
-  doxygen python-sphinx texlive
+  doxygen
+
+- gnuradio sphinx documentation is deprecated (see
+  https://www.gnuradio.org/doc/sphinx/) and broken
+
+  for it these packages where needed:
+
+  python-sphinx texlive
+
+  and package hieroglyph, for python3 (since sphinx is now python3),
+  from pip:
+
+  $ pip3 install --user hieroglyph
 
 - for step xilinx you need to have
 
@@ -355,7 +367,7 @@ ONLYGIT=1
 CLEANBUILD=1
 LOG=0
 MAKE_NUM_CONCURRENT_JOBS=$(getconf _NPROCESSORS_ONLN)
-BUILD_DOC=1
+BUILD_SPHINX_DOC=1
 while getopts "PNFni:s:pcSdh" OPT; do
     case $OPT in
         P) STEPS="$STEPS $NUTAQ_STEPS" ;;
@@ -367,7 +379,7 @@ while getopts "PNFni:s:pcSdh" OPT; do
         p) PULL=0 ;;
         c) CLEANBUILD=0 ;;
         S) MAKE_NUM_CONCURRENT_JOBS=1 ;;
-        d) BUILD_DOC=0 ;;
+        d) BUILD_SPHINX_DOC=0 ;;
         h) usage ; exit 0 ;;
         *) usage ; exit 1 ;;
     esac
@@ -455,7 +467,8 @@ fi
 git_step "gnuradio" "https://github.com/gnuradio/gnuradio.git" "maint-3.7"
 if [ "$DO_P" == 0 ] ; then
     cmake_build gnuradio.git/build
-    if [ "$BUILD_DOC" == "0" ] ; then
+    if [ "$BUILD_SPHINX_DOC" == "0" ] ; then
+        rm -rf gnuradio.git/docs/sphinx/hieroglyph  # TODO: add hieroglyph dependency
         pushd gnuradio.git/build
         ./run_sphinx_build.sh
         cp -dR --preserve=all docs/sphinx/sphinx_out $INSTALL_DIR/share/doc/gnuradio-*
