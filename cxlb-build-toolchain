@@ -81,7 +81,9 @@ Prior to running it you must:
   python3-mako python3-requests python3-numpy python3-setuptools
   python-six python3-six
 
-- to build ctrlport you need (possibly from the testing / unstable /
+- ctrlport (CURRENTLY BROKEN):
+
+  to build ctrlport you need (possibly from the testing / unstable /
   experimental debian repositories, as thrift status in debian is
   currently changing):
 
