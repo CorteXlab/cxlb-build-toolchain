@@ -71,23 +71,22 @@ Prior to running it you must:
   libboost-all-dev libusb-dev libusb-1.0-0-dev fort77 libsdl1.2-dev
   python-wxgtk3.0 libqt4-dev python-numpy ccache python-opengl
   libgsl0-dev python-cheetah python-lxml qt4-dev-tools libqwt5-qt4-dev
-  libqwtplot3d-qt4-dev pyqt4-dev-tools python-qwt5-qt4 cmake git-core
-  wget libxi-dev python-docutils gtk2-engines-pixbuf r-base-dev
-  python-tk liborc-0.4-0 liborc-0.4-dev libasound2-dev python-gtk2
-  libportaudio2 portaudio19-dev ca-certificates xalan libpcap0.8-dev
-  libmpfr4 libgmp10 expect fxload python-mako libcomedi-dev
-  liblog4cpp5-dev python-requests libgsl-dev libzmq3-dev libgmp-dev
-  python-setuptools libitpp-dev python-scipy libzmq5-dev libgps-dev
-  python3-mako python3-requests python3-numpy python3-setuptools
-  python-six python3-six
+  libqwtplot3d-qt4-dev pyqt4-dev-tools python-qwt5-qt4 cmake git wget
+  libxi-dev python-docutils gtk2-engines-pixbuf r-base-dev python-tk
+  liborc-0.4-0 liborc-0.4-dev libasound2-dev python-gtk2 libportaudio2
+  portaudio19-dev ca-certificates xalan libpcap0.8-dev libmpfr4
+  libgmp10 expect fxload python-mako libcomedi-dev liblog4cpp5-dev
+  python-requests libgsl-dev libzmq3-dev libgmp-dev python-setuptools
+  libitpp-dev python-scipy libzmq5-dev libgps-dev python3-mako
+  python3-requests python3-numpy python3-setuptools python-six
+  python3-six
 
 - adalm pluto:
 
   for adalm pluto support, install packages:
 
-  libxml2 libxml2-dev bison flex cmake git libaio-dev libboost-all-dev
-  swig libiio-dev libiio-utils python-libiio python3-libiio
-  libad9361-dev
+  libxml2 libxml2-dev bison flex libaio-dev libiio-dev libiio-utils
+  python-libiio python3-libiio libad9361-dev
 
 - ctrlport (CURRENTLY BROKEN):
 
@@ -99,8 +98,7 @@ Prior to running it you must:
 
 - to build bokehgui, you need:
 
-  nodejs python-jinja2 python-dateutil python-yaml python-numpy
-  python-packaging python-six python-tornado python-futures
+  nodejs python-jinja2 python-dateutil python-yaml python-packaging python-tornado python-futures
   python-pandas python-psutil python-sphinx
 
   and bokeh, currently not packaged, so install with pip, eg.:
