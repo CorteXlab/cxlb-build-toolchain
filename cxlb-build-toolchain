@@ -440,9 +440,6 @@ cd $SOURCES_DIR
 # uhd
 # http://code.ettus.com/redmine/ettus/projects/uhd/wiki (maintenant: http://files.ettus.com/manual/)
 # http://code.ettus.com/redmine/ettus/projects/uhd/wiki/UHD_Build
-# install des dépendances
-# aptitude install libboost-all-dev libusb-1.0-0-dev python-cheetah doxygen python-docutils
-# en réalité juste libusb-1.0-0-dev
 git_step "uhd" "git://github.com/EttusResearch/uhd.git" "master"
 if [ "$DO_P" == 0 ] ; then
     cmake_build uhd.git/host/build
@@ -463,9 +460,6 @@ fi
 # http://gnuradio.org/redmine/projects/gnuradio/wiki/InstallingGRFromSource#Installing-manually-from-source
 # http://gnuradio.org/redmine/projects/gnuradio/wiki/BuildGuide
 # http://gnuradio.org/doc/doxygen/build_guide.html
-# install des dépendances
-# aptitude install libfontconfig1-dev libxrender-dev libpulse-dev swig g++ automake autoconf libtool python-dev libfftw3-dev libcppunit-dev libboost-all-dev libusb-dev libusb-1.0-0-dev fort77 libsdl1.2-dev python-wxgtk2.8 git-core libqt4-dev python-numpy ccache python-opengl libgsl0-dev python-cheetah python-lxml doxygen qt4-dev-tools libusb-1.0-0-dev libqwt5-qt4-dev libqwtplot3d-qt4-dev pyqt4-dev-tools python-qwt5-qt4 cmake git-core wget libxi-dev python-docutils gtk2-engines-pixbuf r-base-dev python-tk liborc-0.4-0 liborc-0.4-dev libasound2-dev python-gtk2 libportaudio2 portaudio19-dev ca-certificates
-# en réalité juste libcppunit-dev fort77 libqt4-dev ccache libgsl0-dev qt4-dev-tools libqwt5-qt4-dev libqwtplot3d-qt4-dev pyqt4-dev-tools python-qwt5-qt4 r-base-dev liborc-0.4-dev portaudio19-dev
 git_step "gnuradio" "https://github.com/gnuradio/gnuradio.git" "maint-3.7"
 if [ "$DO_P" == 0 ] ; then
     cmake_build gnuradio.git/build
@@ -482,9 +476,6 @@ fi
 # gr-bokehgui
 # https://github.com/kartikp1995/gr-bokehgui
 # install des dépendances
-# aptitude install nodejs python-jinja2 python-dateutil python-yaml python-numpy python-packaging python-six python-tornado python-futures python-pandas python-psutil python-sphinx
-# pip install [--user] bokehgui
-# utiliser le fork mimbert, incluant un fix pour la dernière version de bokeh
 git_step "gr-bokehgui" "https://github.com/mimbert/gr-bokehgui.git" "master"
 if [ "$DO_P" == 0 ] ; then
     cmake_build gr-bokehgui.git/build
