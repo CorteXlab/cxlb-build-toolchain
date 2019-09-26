@@ -359,8 +359,9 @@ find_files() {
 NOCHECKOUT=1
 FORCECHECKOUT=1
 PULL=1
+# all possible steps: gnuradio uhd rtl-sdr gr-iqbal uhd-firmware fft-web gr-ofdm gr-bokehgui gr-osmosdr pluto bladerf hackrf xilinx-usb-driver xilinx digilent adp gr-cortexlab
 NUTAQ_STEPS="xilinx digilent adp gr-cortexlab"
-STEPS="gnuradio" # uhd rtl-sdr gr-iqbal uhd-firmware fft-web gr-ofdm gr-bokehgui gr-osmosdr pluto bladerf hackrf xilinx-usb-driver xilinx digilent adp gr-cortexlab
+STEPS="gnuradio"
 BUNDLEIN=""
 ONLYGIT=1
 CLEANBUILD=1
