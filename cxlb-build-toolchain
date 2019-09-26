@@ -360,9 +360,7 @@ NOCHECKOUT=1
 FORCECHECKOUT=1
 PULL=1
 NUTAQ_STEPS="xilinx digilent adp gr-cortexlab"
-STEPS="uhd rtl-sdr gnuradio gr-iqbal hackrf uhd-firmware fft-web gr-ofdm"
-# optional steps: gr-bokehgui gr-osmosdr bladerf
-STEPS="uhd rtl-sdr gnuradio gr-iqbal hackrf uhd-firmware fft-web gr-ofdm gr-bokehgui gr-osmosdr bladerf pluto"
+STEPS="gnuradio" # uhd rtl-sdr gr-iqbal uhd-firmware fft-web gr-ofdm gr-bokehgui gr-osmosdr pluto bladerf hackrf gr-cortexlab"
 BUNDLEIN=""
 ONLYGIT=1
 CLEANBUILD=1
