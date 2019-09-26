@@ -460,7 +460,7 @@ fi
 # http://gnuradio.org/redmine/projects/gnuradio/wiki/InstallingGRFromSource#Installing-manually-from-source
 # http://gnuradio.org/redmine/projects/gnuradio/wiki/BuildGuide
 # http://gnuradio.org/doc/doxygen/build_guide.html
-git_step "gnuradio" "https://github.com/gnuradio/gnuradio.git" "maint-3.7"
+git_step "gnuradio" "https://github.com/gnuradio/gnuradio.git" "maint-3.8"
 if [ "$DO_P" == 0 ] ; then
     cmake_build gnuradio.git/build
     if [ "$BUILD_SPHINX_DOC" == "0" ] ; then
@@ -476,7 +476,7 @@ fi
 # gr-bokehgui
 # https://github.com/kartikp1995/gr-bokehgui
 # install des dépendances
-git_step "gr-bokehgui" "https://github.com/mimbert/gr-bokehgui.git" "master"
+git_step "gr-bokehgui" "https://github.com/Inria-Maracas/gr-bokehgui.git" "master"
 if [ "$DO_P" == 0 ] ; then
     cmake_build gr-bokehgui.git/build
 fi
@@ -484,7 +484,7 @@ fi
 # ------------------------------------------------------------------------
 # gr-iqbal
 # http://git.osmocom.org/gr-iqbal
-git_step "gr-iqbal" "git://git.osmocom.org/gr-iqbal.git" "master"
+git_step "gr-iqbal" "https://github.com/velichkov/gr-iqbal.git" "maint-3.8"
 if [ "$DO_P" == 0 ] ; then
     pushd gr-iqbal.git
     git submodule init
@@ -525,7 +525,7 @@ fi
 # ------------------------------------------------------------------------
 # gr-osmosdr osmocom
 # http://sdr.osmocom.org/trac/wiki/GrOsmoSDR
-git_step "gr-osmosdr" "git://git.osmocom.org/gr-osmosdr.git" "master"
+git_step "gr-osmosdr" "https://github.com/igorauad/gr-osmosdr.git" "gr3.8"
 if [ "$DO_P" == 0 ] ; then
     cmake_build gr-osmosdr.git/build
 fi
