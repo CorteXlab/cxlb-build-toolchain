@@ -248,7 +248,7 @@ cmake_build() {
     mkdir -p "$BUILDDIR"
     pushd "$BUILDDIR" > /dev/null
     echo "### set environment"
-    eval "$SET_CXLB_TOOLCHAIN_ENV"
+    eval "$SET_TOOLCHAIN_ENV"
     echo "### cmake"
     cmake $COMMON_CMAKE_OPTS $CMAKE_OPTS ../
     #make VERBOSE=1
@@ -313,7 +313,7 @@ grc_build_block() {
     STEM=${GRC%.grc}
     echo "### build grc hier block $GRC"
     echo "### set environment"
-    eval "$SET_CXLB_TOOLCHAIN_ENV"
+    eval "$SET_TOOLCHAIN_ENV"
     echo "### grc compilation"
     COUNT=1
     until echo "### try $COUNT" && grcc -d . $STEM.grc || [ "$COUNT" -ge 20 ] ; do
@@ -330,11 +330,11 @@ grc_build_block() {
     # grcc, which occurs only in some circumstances, where the python
     # imports are not correct
     echo "### fix compiled grc imports"
-    xalan -xsl $SCRIPTLOCATION/fix_xml.xsl -param pythondir "'$NEWPYTHONPATH'" -param modulename "'$STEM'" < $STEM.py.xml > $STEM.py.xml.tmp
+    xalan -xsl $SCRIPTLOCATION/fix_xml.xsl -param pythondir "'$TC_PYTHONPATH'" -param modulename "'$STEM'" < $STEM.py.xml > $STEM.py.xml.tmp
     mv $STEM.py.xml.tmp $STEM.py.xml
 
     echo "### install compiled grc .py and xml in gnuradio"
-    cp $STEM.py "$NEWPYTHONPATH"
+    cp $STEM.py "$TC_PYTHONPATH"
     cp $STEM.py.xml $INSTALL_DIR/share/gnuradio/grc/blocks/
 }
 
@@ -404,16 +404,17 @@ fi
 mkdir -p "$INSTALL_DIR/share/$(basename $0)"
 BUNDLEOUT="$INSTALL_DIR/share/$(basename $0)/build.bundle"
 
-#COMMON_CMAKE_OPTS="-DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR"
-COMMON_CMAKE_OPTS="-DCMAKE_INSTALL_PREFIX=$INSTALL_DIR"
+PYTHON_EXECUTABLE=$(which python3)
+#COMMON_CMAKE_OPTS="-DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR -DPYTHON_EXECUTABLE=$PYTHON_EXECUTABLE"
+COMMON_CMAKE_OPTS="-DCMAKE_INSTALL_PREFIX=$INSTALL_DIR -DPYTHON_EXECUTABLE=$PYTHON_EXECUTABLE"
 
 if [ "$BUNDLEOUT" != "" ] ; then
     echo "# $BUILDTITLE" >> "$BUNDLEOUT"
 fi
 
-export NEWPYTHONPATH="$INSTALL_DIR/"$(python -c "import sys,os; print os.sep.join(['lib', 'python' + sys.version[:3], 'dist-packages'])")
-SET_CXLB_TOOLCHAIN_ENV=$(cat <<EOF
-export PYTHONPATH="$NEWPYTHONPATH\${PYTHONPATH:+:\${PYTHONPATH}}"
+export TC_PYTHONPATH="$INSTALL_DIR/"$("$PYTHON_EXECUTABLE" -c "import sys,os; print(os.sep.join(['lib', 'python' + sys.version[:3], 'dist-packages']))")
+SET_TOOLCHAIN_ENV=$(cat <<EOF
+export PYTHONPATH="$TC_PYTHONPATH\${PYTHONPATH:+:\${PYTHONPATH}}"
 export LD_LIBRARY_PATH="$INSTALL_DIR/lib\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}"
 export PATH="$INSTALL_DIR/bin\${PATH:+:\${PATH}}"
 export MANPATH="$INSTALL_DIR/share/man\${MANPATH:+:\${MANPATH}}"
@@ -906,7 +907,7 @@ cat > "$INSTALL_DIR/bin/cxlb-toolchain-user-conf" <<EOF
 # the toolchain
 # ------------------------------------------------------------------------
 
-$SET_CXLB_TOOLCHAIN_ENV
+$SET_TOOLCHAIN_ENV
 if [ -f "$INSTALL_DIR/lib/libusb-driver.so" ] ; then
   export LD_PRELOAD="$INSTALL_DIR/lib/libusb-driver.so\${LD_PRELOAD:+:\${LD_PRELOAD}}"
 fi
