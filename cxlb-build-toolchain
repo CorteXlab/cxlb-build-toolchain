@@ -64,83 +64,86 @@ Prior to running it you must:
   gnuradio-* libgruel-* libgruel* libgruel0* libgnuradio*
   python-gnuradio*
 
-- install packages:
+- install dependencies:
 
-  libfontconfig1-dev libxrender-dev libpulse-dev swig g++ automake
-  autoconf libtool python-dev libfftw3-dev libcppunit-dev
-  libboost-all-dev libusb-dev libusb-1.0-0-dev fort77 libsdl1.2-dev
-  python-wxgtk3.0 libqt4-dev python-numpy ccache python-opengl
-  libgsl0-dev python-cheetah python-lxml qt4-dev-tools libqwt5-qt4-dev
-  libqwtplot3d-qt4-dev pyqt4-dev-tools python-qwt5-qt4 cmake git wget
-  libxi-dev python-docutils gtk2-engines-pixbuf r-base-dev python-tk
-  liborc-0.4-0 liborc-0.4-dev libasound2-dev python-gtk2 libportaudio2
-  portaudio19-dev ca-certificates xalan libpcap0.8-dev libmpfr4
-  libgmp10 expect fxload python-mako libcomedi-dev liblog4cpp5-dev
-  python-requests libgsl-dev libzmq3-dev libgmp-dev python-setuptools
-  libitpp-dev python-scipy libzmq5-dev libgps-dev python3-mako
-  python3-requests python3-numpy python3-setuptools python-six
-  python3-six
+  - uhd:
 
-- adalm pluto:
+    git cmake g++ python3 python3-mako python3-requests python3-numpy
+    libboost-dev libboost-thread-dev libboost-filesystem-dev
+    libboost-program-options-dev libboost-regex-dev libboost-test-dev
+    libboost-math-dev
 
-  for adalm pluto support, install packages:
+  - uhd-firmware:
 
-  libxml2 libxml2-dev bison flex libaio-dev libiio-dev libiio-utils
-  python-libiio python3-libiio libad9361-dev
+    need to have built uhd before
 
-- ctrlport (CURRENTLY BROKEN):
+  - gnuradio:
 
-  to build ctrlport you need (possibly from the testing / unstable /
-  experimental debian repositories, as thrift status in debian is
-  currently changing):
+    git cmake g++ python3 python3-dev python3-mako python3-six
+    libboost-dev libboost-thread-dev libboost-filesystem-dev
+    libboost-program-options-dev libboost-random-dev libboost-test-dev
+    libboost-math-dev libboost-date-time-dev libboost-system-dev
+    libboost-regex-dev liblog4cpp5-dev pkgconf libgmp-dev swig
+    python3-yaml python3-gi python3-gi-cairo gir1.2-gtk-3.0
+    python3-numpy libgsl0-dev libfftw3-dev libqwt-qt5-dev qtbase5-dev
+    python-pyqt5 pyqt5-dev-tools python3-click python3-click-plugins
+    libzmq5-dev
 
-  thrift-compiler python-thrift libthrift-dev
+  - gr-bokehgui: #TOCHECK
 
-- to build bokehgui, you need:
+    python3-jinja2 python3-dateutil python3-packaging python3-tornado
+    python3-pandas python3-psutil python3-sphinx python3-pip
 
-  nodejs python-jinja2 python-dateutil python-yaml python-packaging python-tornado python-futures
-  python-pandas python-psutil python-sphinx
+    and bokeh, currently not packaged, so install with
+    pip3, eg.:
 
-  and bokeh, currently not packaged, so install with pip, eg.:
+    $ pip3 install --user bokeh
 
-  $ pip install --user bokeh
+  - gr-iqbal: #TOCHECK
 
-- to be able to build documentation, install packages:
+    nothing
 
-  doxygen
+  - pluto: #TOCHECK
 
-- gnuradio sphinx documentation is deprecated (see
-  https://www.gnuradio.org/doc/sphinx/) and broken
+    libxml2 libxml2-dev bison flex libaio-dev libiio-dev libiio-utils
+    python-libiio python3-libiio libad9361-dev
 
-  for it these packages where needed:
+  - rtl-sdr: #TODO
 
-  python-sphinx texlive
+  - fft-web: #TODO
 
-  and package hieroglyph, for python3 (since sphinx is now python3),
-  from pip:
+  - gr-ofdm: #TODO
 
-  $ pip3 install --user hieroglyph
+  - gr-osmosdr: #TODO
 
-- for step xilinx you need to have
+  - bladerf: #TODO
 
-  ${DEFAULT_XILINX_LABTOOL_PACKAGE}.tar.gz
+  - hackrf: #TODO
 
-  in <compile_dir>/xilinx/
+  - to be able to build documentation:
 
-- for step digilent you need to have
+    doxygen graphviz
 
-  ${DEFAULT_FTDI_DRIVER_PACKAGE}.tgz
-  ${DEFAULT_DIGILENT_RUNTIME_PACKAGE}.tar.gz
-  ${DEFAULT_DIGILENT_UTILITIES_PACKAGE}.tar.gz
-  ${DEFAULT_DIGILENT_PLUGIN_PACKAGE}.tar.gz
+  - for step xilinx you need to have
 
-  in <compile_dir>/digilent/
+    ${DEFAULT_XILINX_LABTOOL_PACKAGE}.tar.gz
 
-- for step nutaq you need to have
+    in <compile_dir>/xilinx/
 
-  ${DEFAULT_NUTAQ_ADP_PACKAGE}.deb
+  - for step digilent you need to have
 
-  in <compile_dir>/nutaq/
+    ${DEFAULT_FTDI_DRIVER_PACKAGE}.tgz
+    ${DEFAULT_DIGILENT_RUNTIME_PACKAGE}.tar.gz
+    ${DEFAULT_DIGILENT_UTILITIES_PACKAGE}.tar.gz
+    ${DEFAULT_DIGILENT_PLUGIN_PACKAGE}.tar.gz
+
+    in <compile_dir>/digilent/
+
+  - for step nutaq you need to have
+
+    ${DEFAULT_NUTAQ_ADP_PACKAGE}.deb
+
+    in <compile_dir>/nutaq/
 
 EOF
 }
