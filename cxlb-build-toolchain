@@ -75,6 +75,7 @@ usage() {
     -c : clean build dir before build
     -S : disable autodetection of num concurrent jobs for make, use 1
     -d : build gnuradio sphinx doc (deprecated and broken)
+    -a : automatically install (with sudo) dependencies
     -h : this help
 
 This scripts packages the cortexlab toolchain. It is for linux-amd64
@@ -269,7 +270,9 @@ cmake_build() {
     # remaining params: cmake options
     BUILDDIR="$1"
     CMAKE_OPTS="$@"
-    echo "### cmake_build in $BUILDDIR with options $COMMON_CMAKE_OPTS $CMAKE_OPTS"
+    PYTHON_EXECUTABLE="$(which python3 || which python2 || true)"
+    ALL_CMAKE_OPTS="-DCMAKE_INSTALL_PREFIX=$INSTALL_DIR -DPYTHON_EXECUTABLE=$PYTHON_EXECUTABLE $COMMON_CMAKE_OPTS $CMAKE_OPTS"
+    echo "### cmake_build in $BUILDDIR with options $ALL_CMAKE_OPTS"
     if [ "$CLEANBUILD" == "0" ] ; then
         echo "### cleaning before build"
         rm -rf "$BUILDDIR"
@@ -279,7 +282,7 @@ cmake_build() {
     echo "### set environment"
     eval "$SET_TOOLCHAIN_ENV"
     echo "### cmake"
-    cmake $COMMON_CMAKE_OPTS $CMAKE_OPTS ../
+    cmake $ALL_CMAKE_OPTS ../
     #make VERBOSE=1
     echo "### make"
     make -j $MAKE_NUM_CONCURRENT_JOBS
@@ -295,12 +298,30 @@ do_step_p() {
     echo $STEPS | grep -q '\(\s\|^\)'$1'\(\s\|$\)'
 }
 
+install_deps() {
+    STEP="$1"
+    USERNAME=$(whoami)
+    if [ "$USERNAME" == "root" ] ; then
+        SUDO_PREFIX=""
+    else
+        SUDO_PREFIX="sudo "
+    fi
+    if [ "${DEPS[$STEP]}" != "" ] ; then
+        echo "installing dependencies for $STEP"
+        $SUDO_PREFIX apt -y install ${DEPS[$STEP]}
+    fi
+}
+
 base_step() {
-    # checks if a step needs to be performed. If yes, display a step banner and return 0
+    # checks if a step needs to be performed. If yes, display a step
+    # banner, optionally install dependencies, and return 0
     # param 1: step name
     STEP="$1"
     if do_step_p "$STEP" ; then
         package_banner "$STEP"
+        if [ "$AUTO_DEPS" == 0 ] ; then
+            install_deps "$STEP"
+        fi
         DO_P=0
     else
         DO_P=1
@@ -394,7 +415,8 @@ CLEANBUILD=1
 LOG=0
 MAKE_NUM_CONCURRENT_JOBS=$(getconf _NPROCESSORS_ONLN)
 BUILD_SPHINX_DOC=1
-while getopts "PNFni:s:pcSdh" OPT; do
+AUTO_DEPS=1
+while getopts "PNFni:s:pcSdah" OPT; do
     case $OPT in
         P) STEPS="$STEPS $NUTAQ_STEPS" ;;
         N) NOCHECKOUT=0 ;;
@@ -406,6 +428,7 @@ while getopts "PNFni:s:pcSdh" OPT; do
         c) CLEANBUILD=0 ;;
         S) MAKE_NUM_CONCURRENT_JOBS=1 ;;
         d) BUILD_SPHINX_DOC=0 ;;
+        a) AUTO_DEPS=0;;
         h) usage ; exit 0 ;;
         *) usage ; exit 1 ;;
     esac
@@ -429,9 +452,8 @@ fi
 mkdir -p "$INSTALL_DIR/share/$(basename $0)"
 BUNDLEOUT="$INSTALL_DIR/share/$(basename $0)/build.bundle"
 
-PYTHON_EXECUTABLE="$(which python3 || which python2 || true)"
-#COMMON_CMAKE_OPTS="-DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR -DPYTHON_EXECUTABLE=$PYTHON_EXECUTABLE"
-COMMON_CMAKE_OPTS="-DCMAKE_INSTALL_PREFIX=$INSTALL_DIR -DPYTHON_EXECUTABLE=$PYTHON_EXECUTABLE"
+# example for having debug symbols:
+# COMMON_CMAKE_OPTS="-DCMAKE_BUILD_TYPE=RelWithDebInfo"
 
 if [ "$BUNDLEOUT" != "" ] ; then
     echo "# $BUILDTITLE" >> "$BUNDLEOUT"
