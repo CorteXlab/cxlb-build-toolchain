@@ -68,82 +68,97 @@ Prior to running it you must:
 
   - uhd:
 
-    git cmake g++ python3 python3-mako python3-requests python3-numpy
-    libboost-dev libboost-thread-dev libboost-filesystem-dev
-    libboost-program-options-dev libboost-regex-dev libboost-test-dev
-    libboost-math-dev
+    - packages: git cmake pkgconf g++ python3 python3-mako
+      python3-requests python3-numpy libboost-dev libboost-thread-dev
+      libboost-filesystem-dev libboost-program-options-dev
+      libboost-regex-dev libboost-test-dev libboost-math-dev
 
   - uhd-firmware:
 
-    need to have built uhd before
+    - need to have built uhd before
+
+  - rtl-sdr:
+
+    - packages: git cmake pkgconf libusb-1.0-0-dev
+
+  - bladerf:
+
+    - packages: git cmake pkgconf g++ libusb-1.0-0-dev
+
+  - hackrf:
+
+    - packages: git cmake pkgconf libusb-1.0-0-dev libfftw3-dev
 
   - gnuradio:
 
-    git cmake g++ python3 python3-dev python3-mako python3-six
-    libboost-dev libboost-thread-dev libboost-filesystem-dev
-    libboost-program-options-dev libboost-random-dev libboost-test-dev
-    libboost-math-dev libboost-date-time-dev libboost-system-dev
-    libboost-regex-dev liblog4cpp5-dev pkgconf libgmp-dev swig
-    python3-yaml python3-gi python3-gi-cairo gir1.2-gtk-3.0
-    python3-numpy libgsl0-dev libfftw3-dev libqwt-qt5-dev qtbase5-dev
-    python-pyqt5 pyqt5-dev-tools python3-click python3-click-plugins
-    libzmq5-dev
+    - need to have built uhd before
+
+    - packages: git cmake pkgconf g++ python3 python3-dev python3-mako
+      python3-six libboost-dev libboost-thread-dev
+      libboost-filesystem-dev libboost-program-options-dev
+      libboost-random-dev libboost-test-dev libboost-math-dev
+      libboost-date-time-dev libboost-system-dev libboost-regex-dev
+      liblog4cpp5-dev libgmp-dev swig python3-yaml python3-gi
+      python3-gi-cairo gir1.2-gtk-3.0 python3-numpy libgsl0-dev
+      libfftw3-dev libqwt-qt5-dev qtbase5-dev python-pyqt5
+      pyqt5-dev-tools python3-click python3-click-plugins libzmq5-dev
+
+  - pluto: #TODO #PY3ISSUES
+
+    - need to have built gnuradio before
+
+    - packages: libad9361-dev libiio-dev bison flex
 
   - gr-bokehgui: #TOCHECK
 
-    python3-jinja2 python3-dateutil python3-packaging python3-tornado
-    python3-pandas python3-psutil python3-sphinx python3-pip
+    - need to have built gnuradio before
 
-    and bokeh, currently not packaged, so install with
-    pip3, eg.:
+    - packages: python3-jinja2 python3-dateutil python3-packaging
+      python3-tornado python3-pandas python3-psutil python3-sphinx
+      python3-pip
 
-    $ pip3 install --user bokeh
+    - bokeh, currently not packaged, so install with pip3, eg.:
 
-  - gr-iqbal: #TOCHECK
+      $ pip3 install --user bokeh
 
-    nothing
+  - gr-iqbal:
 
-  - pluto: #TOCHECK
-
-    libxml2 libxml2-dev bison flex libaio-dev libiio-dev libiio-utils
-    python-libiio python3-libiio libad9361-dev
-
-  - rtl-sdr: #TODO
+    - need to have built gnuradio before
 
   - fft-web: #TODO
 
-  - gr-ofdm: #TODO
+    - need to have built gnuradio before
 
-  - gr-osmosdr: #TODO
+  - gr-ofdm: #TODO #GR3.8ISSUES
 
-  - bladerf: #TODO
+    - need to have built gnuradio before
 
-  - hackrf: #TODO
+  - gr-osmosdr:
+
+    - need to have built gnuradio before
+
+    - need to have built hardware drivers before (uhd, rtl-sdr, etc.)
 
   - to be able to build documentation:
 
-    doxygen graphviz
+    - packages: doxygen graphviz
 
-  - for step xilinx you need to have
+  - xilinx:
 
-    ${DEFAULT_XILINX_LABTOOL_PACKAGE}.tar.gz
+    - need ${DEFAULT_XILINX_LABTOOL_PACKAGE}.tar.gz in
+      <compile_dir>/xilinx/
 
-    in <compile_dir>/xilinx/
+  - digilent:
 
-  - for step digilent you need to have
+    - need ${DEFAULT_FTDI_DRIVER_PACKAGE}.tgz
+      ${DEFAULT_DIGILENT_RUNTIME_PACKAGE}.tar.gz
+      ${DEFAULT_DIGILENT_UTILITIES_PACKAGE}.tar.gz
+      ${DEFAULT_DIGILENT_PLUGIN_PACKAGE}.tar.gz in
+      <compile_dir>/digilent/
 
-    ${DEFAULT_FTDI_DRIVER_PACKAGE}.tgz
-    ${DEFAULT_DIGILENT_RUNTIME_PACKAGE}.tar.gz
-    ${DEFAULT_DIGILENT_UTILITIES_PACKAGE}.tar.gz
-    ${DEFAULT_DIGILENT_PLUGIN_PACKAGE}.tar.gz
+  - nutaq:
 
-    in <compile_dir>/digilent/
-
-  - for step nutaq you need to have
-
-    ${DEFAULT_NUTAQ_ADP_PACKAGE}.deb
-
-    in <compile_dir>/nutaq/
+    - need ${DEFAULT_NUTAQ_ADP_PACKAGE}.deb in <compile_dir>/nutaq/
 
 EOF
 }
