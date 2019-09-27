@@ -470,6 +470,13 @@ if [ "$DO_P" == 0 ] ; then
 fi
 
 # ------------------------------------------------------------------------
+# uhd firmware update
+step "uhd-firmware"
+if [ "$DO_P" == 0 ] ; then
+    $INSTALL_DIR/lib/uhd/utils/uhd_images_downloader.py
+fi
+
+# ------------------------------------------------------------------------
 # rtl-sdr osmocom
 # http://sdr.osmocom.org/trac/wiki/rtl-sdr
 git_step "rtl-sdr" "git://git.osmocom.org/rtl-sdr.git" "master"
@@ -477,6 +484,22 @@ if [ "$DO_P" == 0 ] ; then
     cmake_build rtl-sdr.git/build
     mkdir -p "$INSTALL_DIR/etc/udev/rules.d/"
     cp "$SOURCES_DIR/rtl-sdr.git/rtl-sdr.rules" "$INSTALL_DIR/etc/udev/rules.d/"
+fi
+
+# ------------------------------------------------------------------------
+# bladeRF
+# http://www.nuand.com/bladeRF
+git_step "bladerf" "https://github.com/Nuand/bladeRF.git" "master"
+if [ "$DO_P" == 0 ] ; then
+    cmake_build bladeRF.git/host/build -DINSTALL_UDEV_RULES=ON -DUDEV_RULES_PATH="$INSTALL_DIR/etc/udev/rules.d/"
+fi
+
+# ------------------------------------------------------------------------
+# hackrf
+# https://github.com/mossmann/hackrf
+git_step "hackrf" "https://github.com/mossmann/hackrf.git" "master"
+if [ "$DO_P" == 0 ] ; then
+    cmake_build hackrf.git/host/build -DINSTALL_UDEV_RULES=ON -DUDEV_RULES_PATH="$INSTALL_DIR/etc/udev/rules.d/"
 fi
 
 # ------------------------------------------------------------------------
@@ -494,6 +517,19 @@ if [ "$DO_P" == 0 ] ; then
         cp -dR --preserve=all docs/sphinx/sphinx_out $INSTALL_DIR/share/doc/gnuradio-*
         popd
     fi
+fi
+
+# ------------------------------------------------------------------------
+# adalm-pluto
+# https://wiki.analog.com/university/tools/pluto
+# https://wiki.analog.com/resources/tools-software/linux-software/gnuradio
+git_step "pluto" "https://github.com/analogdevicesinc/gr-iio.git" "master"
+if [ "$DO_P" == 0 ] ; then
+    cmake_build gr-iio.git/build
+    mkdir -p "$INSTALL_DIR/etc/udev/rules.d/"
+    pushd "$INSTALL_DIR/etc/udev/rules.d/"
+    wget https://raw.githubusercontent.com/analogdevicesinc/plutosdr-fw/master/scripts/53-adi-plutosdr-usb.rules
+    popd
 fi
 
 # ------------------------------------------------------------------------
@@ -518,40 +554,12 @@ if [ "$DO_P" == 0 ] ; then
 fi
 
 # ------------------------------------------------------------------------
-# bladeRF
-# http://www.nuand.com/bladeRF
-git_step "bladerf" "https://github.com/Nuand/bladeRF.git" "master"
+# fft-web
+git_step "fft-web" "https://github.com/CorteXlab/fft-web.git" "master"
 if [ "$DO_P" == 0 ] ; then
-    cmake_build bladeRF.git/host/build -DINSTALL_UDEV_RULES=ON -DUDEV_RULES_PATH="$INSTALL_DIR/etc/udev/rules.d/"
-fi
-
-# ------------------------------------------------------------------------
-# hackrf
-# https://github.com/mossmann/hackrf
-git_step "hackrf" "https://github.com/mossmann/hackrf.git" "master"
-if [ "$DO_P" == 0 ] ; then
-    cmake_build hackrf.git/host/build -DINSTALL_UDEV_RULES=ON -DUDEV_RULES_PATH="$INSTALL_DIR/etc/udev/rules.d/"
-fi
-
-# ------------------------------------------------------------------------
-# adalm-pluto
-# https://wiki.analog.com/university/tools/pluto
-# https://wiki.analog.com/resources/tools-software/linux-software/gnuradio
-git_step "pluto" "https://github.com/analogdevicesinc/gr-iio.git" "master"
-if [ "$DO_P" == 0 ] ; then
-    cmake_build gr-iio.git/build
-    mkdir -p "$INSTALL_DIR/etc/udev/rules.d/"
-    pushd "$INSTALL_DIR/etc/udev/rules.d/"
-    wget https://raw.githubusercontent.com/analogdevicesinc/plutosdr-fw/master/scripts/53-adi-plutosdr-usb.rules
+    pushd fft-web.git/grc
+    grc_build_block fft_web.grc
     popd
-fi
-
-# ------------------------------------------------------------------------
-# gr-osmosdr osmocom
-# http://sdr.osmocom.org/trac/wiki/GrOsmoSDR
-git_step "gr-osmosdr" "https://github.com/igorauad/gr-osmosdr.git" "gr3.8"
-if [ "$DO_P" == 0 ] ; then
-    cmake_build gr-osmosdr.git/build
 fi
 
 # ------------------------------------------------------------------------
@@ -567,19 +575,11 @@ if [ "$DO_P" == 0 ] ; then
 fi
 
 # ------------------------------------------------------------------------
-# uhd firmware update
-step "uhd-firmware"
+# gr-osmosdr osmocom
+# http://sdr.osmocom.org/trac/wiki/GrOsmoSDR
+git_step "gr-osmosdr" "https://github.com/igorauad/gr-osmosdr.git" "gr3.8"
 if [ "$DO_P" == 0 ] ; then
-    $INSTALL_DIR/lib/uhd/utils/uhd_images_downloader.py
-fi
-
-# ------------------------------------------------------------------------
-# fft-web
-git_step "fft-web" "https://github.com/CorteXlab/fft-web.git" "master"
-if [ "$DO_P" == 0 ] ; then
-    pushd fft-web.git/grc
-    grc_build_block fft_web.grc
-    popd
+    cmake_build gr-osmosdr.git/build
 fi
 
 # ------------------------------------------------------------------------
