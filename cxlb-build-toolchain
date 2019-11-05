@@ -566,6 +566,7 @@ fi
 # http://gnuradio.org/doc/doxygen/build_guide.html
 git_step "gnuradio" "https://github.com/gnuradio/gnuradio.git"
 if [ "$DO_P" == 0 ] ; then
+    sed -i -e 's/BokehLayout/bokeh_layout/' gnuradio.git/grc/core/generator/flow_graph.py.mako
     cmake_build gnuradio.git/build
     if [ "$BUILD_SPHINX_DOC" == "0" ] ; then
         rm -rf gnuradio.git/docs/sphinx/hieroglyph  # TODO: add hieroglyph dependency
