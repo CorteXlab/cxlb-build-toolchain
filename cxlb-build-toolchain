@@ -2,54 +2,9 @@
 
 set -e
 
-# The following global variable is used as a mean to return a result
-# (with shell convention 0 for True, !=0 for False) from a function
-# without interfering with the 'set -e' setting. The other (intuitive
-# and initially used) way to do that would be to call the function in
-# a test context, but this as the nasty side-effect that then the 'set
-# -e' setting is ignored in all the function's inner code. See for
-# example
-# http://unix.stackexchange.com/questions/65532/why-does-set-e-not-work-inside
-# Thus, this looks like an ugly hack but it's the only way I've found
-# so far to ensure that 'set -e' is enforced everywhere.
-DO_P=1
-
 SCRIPTLOCATION=$(cd $(dirname "$0"); pwd)
 COMMANDLINE="$0 $@"
 BUILDTITLE="$(date -u) - $(uname -a) : $COMMANDLINE"
-
-DEFAULT_XILINX_LABTOOL_PACKAGE="Xilinx_LabTools_14.7_1015_1.tar"
-#DEFAULT_FTDI_DRIVER_PACKAGE="libftd2xx-x86_64-1.3.6.tgz"
-#DEFAULT_DIGILENT_RUNTIME_PACKAGE="digilent.adept.runtime_2.16.1-x86_64.tar.gz"
-#DEFAULT_DIGILENT_UTILITIES_PACKAGE="digilent.adept.utilities_2.2.1-x86_64.tar.gz"
-DEFAULT_FTDI_DRIVER_PACKAGE=""
-DEFAULT_DIGILENT_RUNTIME_PACKAGE="digilent.adept.runtime_2.16.1-2_amd64.deb"
-DEFAULT_DIGILENT_UTILITIES_PACKAGE="digilent.adept.utilities_2.2.1-amd64.deb"
-DEFAULT_DIGILENT_PLUGIN_PACKAGE="libCseDigilent_2.5.2-x86_64.tar.gz"
-DEFAULT_NUTAQ_ADP_PACKAGE="nutaq-adp6-microtca-sdk_6.6.0-2_amd64.deb"
-
-# all possible steps: gnuradio uhd rtl-sdr gr-iqbal uhd-firmware fft-web gr-ofdm gr-bokehgui gr-osmosdr pluto bladerf hackrf xilinx-usb-driver xilinx digilent adp gr-cortexlab
-declare -A DEPS
-DEPS['uhd']="git cmake pkgconf g++ python3 python3-mako python3-requests python3-numpy libboost-dev libboost-thread-dev libboost-filesystem-dev libboost-program-options-dev libboost-regex-dev libboost-test-dev libboost-math-dev"
-DEPS['uhd-firmware']=""
-DEPS['rtl-sdr']="git cmake pkgconf libusb-1.0-0-dev"
-DEPS['bladerf']="git cmake pkgconf g++ libusb-1.0-0-dev"
-DEPS['hackrf']="git cmake pkgconf libusb-1.0-0-dev libfftw3-dev"
-DEPS['gnuradio']="git cmake pkgconf g++ python3 python3-dev python3-mako python3-six libboost-dev libboost-thread-dev libboost-filesystem-dev libboost-program-options-dev libboost-random-dev libboost-test-dev libboost-math-dev libboost-date-time-dev libboost-system-dev libboost-regex-dev liblog4cpp5-dev libgmp-dev swig python3-yaml python3-gi python3-gi-cairo gir1.2-gtk-3.0 python3-numpy libgsl0-dev libfftw3-dev libqwt-qt5-dev qtbase5-dev python-pyqt5 pyqt5-dev-tools python3-click python3-click-plugins libzmq5-dev"
-DEPS['pluto']="libad9361-dev libiio-dev bison flex"
-DEPS['gr-bokehgui']="python3-jinja2 python3-dateutil python3-packaging python3-tornado python3-pandas python3-psutil python3-sphinx python3-pip"
-DEPS['gr-iqbal']=""
-DEPS['gr-ofdm']=""
-DEPS['gr-osmosdr']=""
-DEPS['fft-web']=""
-DEPS['xilinx']=""
-DEPS['xilinx-usb-driver']=""
-DEPS['digilent']=""
-DEPS['nutaq']=""
-DEPS['gr-cortexlab']=""
-
-STEPS="gnuradio"
-NUTAQ_STEPS="xilinx digilent adp gr-cortexlab"
 
 usage() {
     cat <<EOF
@@ -178,6 +133,64 @@ Prior to running it you must:
 EOF
 }
 
+STEPS="gnuradio"
+NUTAQ_STEPS="xilinx digilent adp gr-cortexlab"
+
+NOCHECKOUT=1
+FORCECHECKOUT=1
+PULL=1
+BUNDLEIN=""
+ONLYGIT=1
+CLEANBUILD=1
+LOG=0
+MAKE_NUM_CONCURRENT_JOBS=$(getconf _NPROCESSORS_ONLN)
+BUILD_SPHINX_DOC=1
+AUTO_DEPS=1
+while getopts "PNFni:s:pcSdah" OPT; do
+    case $OPT in
+        P) STEPS="$STEPS $NUTAQ_STEPS" ;;
+        N) NOCHECKOUT=0 ;;
+        F) FORCECHECKOUT=0 ;;
+        n) ONLYGIT=0 ;;
+        i) BUNDLEIN=$(readlink -f "$OPTARG") ;;
+        s) STEPS="$OPTARG" ;;
+        p) PULL=0 ;;
+        c) CLEANBUILD=0 ;;
+        S) MAKE_NUM_CONCURRENT_JOBS=1 ;;
+        d) BUILD_SPHINX_DOC=0 ;;
+        a) AUTO_DEPS=0;;
+        h) usage ; exit 0 ;;
+        *) usage ; exit 1 ;;
+    esac
+done
+shift $((OPTIND-1))
+if [ $# -ne 2 ] ; then
+    usage
+    exit 1
+fi
+
+DEFAULT_XILINX_LABTOOL_PACKAGE="Xilinx_LabTools_14.7_1015_1.tar"
+#DEFAULT_FTDI_DRIVER_PACKAGE="libftd2xx-x86_64-1.3.6.tgz"
+#DEFAULT_DIGILENT_RUNTIME_PACKAGE="digilent.adept.runtime_2.16.1-x86_64.tar.gz"
+#DEFAULT_DIGILENT_UTILITIES_PACKAGE="digilent.adept.utilities_2.2.1-x86_64.tar.gz"
+DEFAULT_FTDI_DRIVER_PACKAGE=""
+DEFAULT_DIGILENT_RUNTIME_PACKAGE="digilent.adept.runtime_2.16.1-2_amd64.deb"
+DEFAULT_DIGILENT_UTILITIES_PACKAGE="digilent.adept.utilities_2.2.1-amd64.deb"
+DEFAULT_DIGILENT_PLUGIN_PACKAGE="libCseDigilent_2.5.2-x86_64.tar.gz"
+DEFAULT_NUTAQ_ADP_PACKAGE="nutaq-adp6-microtca-sdk_6.6.0-2_amd64.deb"
+
+# all possible steps: gnuradio uhd rtl-sdr gr-iqbal uhd-firmware fft-web gr-ofdm gr-bokehgui gr-osmosdr pluto bladerf hackrf xilinx-usb-driver xilinx digilent adp gr-cortexlab
+declare -A DEPS
+declare -A CDEPS
+DEPS['uhd']="git cmake pkgconf g++ python3 python3-mako python3-requests python3-numpy libboost-dev libboost-thread-dev libboost-filesystem-dev libboost-program-options-dev libboost-regex-dev libboost-test-dev libboost-math-dev"
+DEPS['rtl-sdr']="git cmake pkgconf libusb-1.0-0-dev"
+DEPS['bladerf']="git cmake pkgconf g++ libusb-1.0-0-dev"
+DEPS['hackrf']="git cmake pkgconf libusb-1.0-0-dev libfftw3-dev"
+DEPS['gnuradio']="git cmake pkgconf g++ python3 python3-dev python3-mako python3-six libboost-dev libboost-thread-dev libboost-filesystem-dev libboost-program-options-dev libboost-random-dev libboost-test-dev libboost-math-dev libboost-date-time-dev libboost-system-dev libboost-regex-dev liblog4cpp5-dev libgmp-dev swig python3-yaml python3-gi python3-gi-cairo gir1.2-gtk-3.0 python3-numpy libgsl0-dev libfftw3-dev libqwt-qt5-dev qtbase5-dev python-pyqt5 pyqt5-dev-tools python3-click python3-click-plugins libzmq5-dev"
+DEPS['pluto']="libad9361-dev libiio-dev bison flex"
+DEPS['gr-bokehgui']="python3-pip python3-jinja2 python3-dateutil python3-packaging python3-tornado python3-pil python3-pyparsing nodejs python3-pandas python3-psutil"
+CDEPS['gr-bokehgui']="$PIP install bokeh"
+
 # git refs to checkout
 declare -A GITREFS
 GITREFS['uhd']=master
@@ -193,6 +206,18 @@ GITREFS['gr-ofdm']=master
 GITREFS['gr-osmosdr']=gr3.8
 GITREFS['xilinx-usb-driver']=master
 GITREFS['gr-cortexlab']=master
+
+# The following global variable is used as a mean to return a result
+# (with shell convention 0 for True, !=0 for False) from a function
+# without interfering with the 'set -e' setting. The other (intuitive
+# and initially used) way to do that would be to call the function in
+# a test context, but this as the nasty side-effect that then the 'set
+# -e' setting is ignored in all the function's inner code. See for
+# example
+# http://unix.stackexchange.com/questions/65532/why-does-set-e-not-work-inside
+# Thus, this looks like an ugly hack but it's the only way I've found
+# so far to ensure that 'set -e' is enforced everywhere.
+DO_P=1
 
 package_banner() {
     # display a build banner for a package.
@@ -420,38 +445,6 @@ find_files() {
     find $DIR | grep -f <(echo "$FILES" | tr ' ' '\n')
 }
 
-NOCHECKOUT=1
-FORCECHECKOUT=1
-PULL=1
-BUNDLEIN=""
-ONLYGIT=1
-CLEANBUILD=1
-LOG=0
-MAKE_NUM_CONCURRENT_JOBS=$(getconf _NPROCESSORS_ONLN)
-BUILD_SPHINX_DOC=1
-AUTO_DEPS=1
-while getopts "PNFni:s:pcSdah" OPT; do
-    case $OPT in
-        P) STEPS="$STEPS $NUTAQ_STEPS" ;;
-        N) NOCHECKOUT=0 ;;
-        F) FORCECHECKOUT=0 ;;
-        n) ONLYGIT=0 ;;
-        i) BUNDLEIN=$(readlink -f "$OPTARG") ;;
-        s) STEPS="$OPTARG" ;;
-        p) PULL=0 ;;
-        c) CLEANBUILD=0 ;;
-        S) MAKE_NUM_CONCURRENT_JOBS=1 ;;
-        d) BUILD_SPHINX_DOC=0 ;;
-        a) AUTO_DEPS=0;;
-        h) usage ; exit 0 ;;
-        *) usage ; exit 1 ;;
-    esac
-done
-shift $((OPTIND-1))
-if [ $# -ne 2 ] ; then
-    usage
-    exit 1
-fi
 SOURCES_DIR="$(mkdir -p "$1" ; cd "$1" ; pwd)"
 INSTALL_DIR="$(mkdir -p "$2" ; cd "$2" ; pwd)"
 
