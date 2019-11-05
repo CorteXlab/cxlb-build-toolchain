@@ -178,6 +178,22 @@ Prior to running it you must:
 EOF
 }
 
+# git refs to checkout
+declare -A GITREFS
+GITREFS['uhd']=master
+GITREFS['rtl-sdr']=master
+GITREFS['bladerf']=master
+GITREFS['hackrf']=master
+GITREFS['gnuradio']=maint-3.8
+GITREFS['pluto']=master
+GITREFS['gr-bokehgui']=master
+GITREFS['gr-iqbal']=maint-3.8
+GITREFS['fft-web']=master
+GITREFS['gr-ofdm']=master
+GITREFS['gr-osmosdr']=gr3.8
+GITREFS['xilinx-usb-driver']=master
+GITREFS['gr-cortexlab']=master
+
 package_banner() {
     # display a build banner for a package.
     # param 1: the string to display
@@ -332,13 +348,11 @@ git_step() {
     # build step preamble: update git, and return 0 if the actual build has to proceed
     # param 1: step name
     # param 2: git repository url
-    # param 3: default branch or commit to checkout
     STEP="$1"
     REPOS="$2"
-    DEFAULTCHECKOUT="$3"
     base_step "$STEP"
     if [ "$DO_P" == 0 ] ; then
-        update_git "$REPOS" "$DEFAULTCHECKOUT"
+        update_git "$REPOS" "${GITREFS[$STEP]}"
         if [ "$ONLYGIT" != "0" ] ; then
             DO_P=0
         else
@@ -487,7 +501,7 @@ cd $SOURCES_DIR
 # uhd
 # http://code.ettus.com/redmine/ettus/projects/uhd/wiki (maintenant: http://files.ettus.com/manual/)
 # http://code.ettus.com/redmine/ettus/projects/uhd/wiki/UHD_Build
-git_step "uhd" "git://github.com/EttusResearch/uhd.git" "master"
+git_step "uhd" "git://github.com/EttusResearch/uhd.git"
 if [ "$DO_P" == 0 ] ; then
     cmake_build uhd.git/host/build
 fi
@@ -502,7 +516,7 @@ fi
 # ------------------------------------------------------------------------
 # rtl-sdr osmocom
 # http://sdr.osmocom.org/trac/wiki/rtl-sdr
-git_step "rtl-sdr" "git://git.osmocom.org/rtl-sdr.git" "master"
+git_step "rtl-sdr" "git://git.osmocom.org/rtl-sdr.git"
 if [ "$DO_P" == 0 ] ; then
     cmake_build rtl-sdr.git/build
     mkdir -p "$INSTALL_DIR/etc/udev/rules.d/"
@@ -512,7 +526,7 @@ fi
 # ------------------------------------------------------------------------
 # bladeRF
 # http://www.nuand.com/bladeRF
-git_step "bladerf" "https://github.com/Nuand/bladeRF.git" "master"
+git_step "bladerf" "https://github.com/Nuand/bladeRF.git"
 if [ "$DO_P" == 0 ] ; then
     cmake_build bladeRF.git/host/build -DINSTALL_UDEV_RULES=ON -DUDEV_RULES_PATH="$INSTALL_DIR/etc/udev/rules.d/"
 fi
@@ -520,7 +534,7 @@ fi
 # ------------------------------------------------------------------------
 # hackrf
 # https://github.com/mossmann/hackrf
-git_step "hackrf" "https://github.com/mossmann/hackrf.git" "master"
+git_step "hackrf" "https://github.com/mossmann/hackrf.git"
 if [ "$DO_P" == 0 ] ; then
     cmake_build hackrf.git/host/build -DINSTALL_UDEV_RULES=ON -DUDEV_RULES_PATH="$INSTALL_DIR/etc/udev/rules.d/"
 fi
@@ -530,7 +544,7 @@ fi
 # http://gnuradio.org/redmine/projects/gnuradio/wiki/InstallingGRFromSource#Installing-manually-from-source
 # http://gnuradio.org/redmine/projects/gnuradio/wiki/BuildGuide
 # http://gnuradio.org/doc/doxygen/build_guide.html
-git_step "gnuradio" "https://github.com/gnuradio/gnuradio.git" "maint-3.8"
+git_step "gnuradio" "https://github.com/gnuradio/gnuradio.git"
 if [ "$DO_P" == 0 ] ; then
     cmake_build gnuradio.git/build
     if [ "$BUILD_SPHINX_DOC" == "0" ] ; then
@@ -546,7 +560,7 @@ fi
 # adalm-pluto
 # https://wiki.analog.com/university/tools/pluto
 # https://wiki.analog.com/resources/tools-software/linux-software/gnuradio
-git_step "pluto" "https://github.com/analogdevicesinc/gr-iio.git" "master"
+git_step "pluto" "https://github.com/analogdevicesinc/gr-iio.git"
 if [ "$DO_P" == 0 ] ; then
     cmake_build gr-iio.git/build
     mkdir -p "$INSTALL_DIR/etc/udev/rules.d/"
@@ -559,7 +573,7 @@ fi
 # gr-bokehgui
 # https://github.com/kartikp1995/gr-bokehgui
 # install des dépendances
-git_step "gr-bokehgui" "https://github.com/Inria-Maracas/gr-bokehgui.git" "master"
+git_step "gr-bokehgui" "https://github.com/mimbert/gr-bokehgui.git"
 if [ "$DO_P" == 0 ] ; then
     cmake_build gr-bokehgui.git/build
 fi
@@ -567,7 +581,7 @@ fi
 # ------------------------------------------------------------------------
 # gr-iqbal
 # http://git.osmocom.org/gr-iqbal
-git_step "gr-iqbal" "https://github.com/velichkov/gr-iqbal.git" "maint-3.8"
+git_step "gr-iqbal" "https://github.com/velichkov/gr-iqbal.git"
 if [ "$DO_P" == 0 ] ; then
     pushd gr-iqbal.git
     git submodule init
@@ -578,7 +592,7 @@ fi
 
 # ------------------------------------------------------------------------
 # fft-web
-git_step "fft-web" "https://github.com/CorteXlab/fft-web.git" "master"
+git_step "fft-web" "https://github.com/CorteXlab/fft-web.git"
 if [ "$DO_P" == 0 ] ; then
     pushd fft-web.git/grc
     grc_build_block fft_web.grc
@@ -588,7 +602,7 @@ fi
 # ------------------------------------------------------------------------
 # gr-ofdm
 # https://github.com/rwth-ti/gr-ofdm
-git_step "gr-ofdm" "https://github.com/rwth-ti/gr-ofdm.git" "master"
+git_step "gr-ofdm" "https://github.com/rwth-ti/gr-ofdm.git"
 if [ "$DO_P" == 0 ] ; then
     cmake_build gr-ofdm.git/build
 
@@ -600,7 +614,7 @@ fi
 # ------------------------------------------------------------------------
 # gr-osmosdr osmocom
 # http://sdr.osmocom.org/trac/wiki/GrOsmoSDR
-git_step "gr-osmosdr" "https://github.com/igorauad/gr-osmosdr.git" "gr3.8"
+git_step "gr-osmosdr" "https://github.com/igorauad/gr-osmosdr.git"
 if [ "$DO_P" == 0 ] ; then
     cmake_build gr-osmosdr.git/build
 fi
@@ -649,7 +663,7 @@ fi
 # http://www.rmdir.de/~michael/xilinx/
 # git://git.zerfleddert.de/usb-driver
 # http://git.zerfleddert.de/cgi-bin/gitweb.cgi/usb-driver
-git_step "xilinx-usb-driver" "git://git.zerfleddert.de/usb-driver" "master"
+git_step "xilinx-usb-driver" "git://git.zerfleddert.de/usb-driver"
 if [ "$DO_P" == 0 ] ; then
     pushd usb-driver.git
     echo "### compiling usb-driver"
@@ -818,7 +832,7 @@ fi
 
 # ------------------------------------------------------------------------
 # gr-cortexlab
-git_step "gr-cortexlab" "https://github.com/CorteXlab/gr-cortexlab.git" "master"
+git_step "gr-cortexlab" "https://github.com/CorteXlab/gr-cortexlab.git"
 if [ "$DO_P" == 0 ] ; then
     cmake_build gr-cortexlab.git/build
     pushd gr-cortexlab.git/grc
