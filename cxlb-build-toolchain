@@ -19,7 +19,8 @@ usage() {
   options:
 
     -s <STEPS> : manually select the list of steps to execute (defaults:
-                 $STEPS)
+                 $STEPS). Step can include gitref to checkout with syntax:
+                  <STEP>=<GITREF>
     -P : add nutaq steps ($NUTAQ_STEPS)
     -p : pull latest updates from remote git repos
     -i <FILE> : checkout packages versions from bundle file <FILE>
@@ -216,6 +217,17 @@ GITREFS['gr-ofdm']=master
 GITREFS['gr-osmosdr']=gr3.8
 GITREFS['xilinx-usb-driver']=master
 GITREFS['gr-cortexlab']=master
+
+REALSTEPS=""
+for STEPSPEC in "$STEPS" ; do
+    STEP=$(echo "$STEPSPEC" | sed 's/=.*//')
+    GITREF=$(echo "$STEPSPEC" | sed -n 's/[^=]*=//p')
+    if [ "$GITREF" != "" ] ; then
+        GITREFS[$STEP]="$GITREF"
+    fi
+    REALSTEPS="$REALSTEPS $STEP"
+done
+STEPS="$REALSTEPS"
 
 # The following global variable is used as a mean to return a result
 # (with shell convention 0 for True, !=0 for False) from a function
