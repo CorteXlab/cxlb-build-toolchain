@@ -92,7 +92,7 @@ Prior to running it you must:
 
   - uhd:
 
-    - packages: ${UHD_DEPS}
+    - packages: ${DEPS[uhd]}
 
   - uhd-firmware:
 
@@ -100,33 +100,33 @@ Prior to running it you must:
 
   - rtl-sdr:
 
-    - packages: ${RTL_SDR_DEPS}
+    - packages: ${DEPS[rtl-sdr]}
 
   - bladerf:
 
-    - packages: ${BLADERF_DEPS}
+    - packages: ${DEPS[bladerf]}
 
   - hackrf:
 
-    - packages: ${HACKRF_DEPS}
+    - packages: ${DEPS[hackrf]}
 
   - gnuradio:
 
     - need to have built uhd before
 
-    - packages: ${GNURADIO_DEPS}
+    - packages: ${DEPS[gnuradio]}
 
   - pluto: #TODO #BROKEN #PY3ISSUES
 
     - need to have built gnuradio before
 
-    - packages: ${PLUTO_DEPS}
+    - packages: ${DEPS[pluto]}
 
   - gr-bokehgui: #TOCHECK
 
     - need to have built gnuradio before
 
-    - packages: ${GR_BOKEHGUI_DEPS}
+    - packages: ${DEPS[gr-bokehgui]}
 
     - bokeh, currently not packaged, so install with pip3, eg.:
 
