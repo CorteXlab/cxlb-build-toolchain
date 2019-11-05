@@ -32,6 +32,7 @@ usage() {
     -S : disable autodetection of num concurrent jobs for make, use 1
     -d : build gnuradio sphinx doc (deprecated and broken)
     -a : automatically install (with sudo) dependencies
+    -y : full path to python executable to use (default: $PYTHON_EXECUTABLE)
     -h : this help
 
 This scripts packages the cortexlab toolchain. It is for linux-amd64
