@@ -361,6 +361,10 @@ install_deps() {
         echo "installing dependencies for $STEP"
         $SUDO_PREFIX apt -y install ${DEPS[$STEP]}
     fi
+    if [ "${CDEPS[$STEP]}" != "" ] ; then
+        echo "running custom dependencies for $STEP"
+        $SUDO_PREFIX ${CDEPS[$STEP]}
+    fi
 }
 
 base_step() {
