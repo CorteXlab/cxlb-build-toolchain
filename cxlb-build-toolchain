@@ -195,13 +195,15 @@ fi
 declare -A DEPS
 declare -A CDEPS
 DEPS['uhd']="git cmake pkgconf g++ $PYTHON_STEM $PYTHON_STEM-mako $PYTHON_STEM-requests $PYTHON_STEM-numpy libboost-dev libboost-thread-dev libboost-filesystem-dev libboost-program-options-dev libboost-regex-dev libboost-test-dev libboost-math-dev"
-if [ "$PYTHON_STEM" == "python" ] ; then
-    DEPS['uhd']="${DEPS[uhd]} $PYTHON_STEM-cheetah"
-fi
 DEPS['rtl-sdr']="git cmake pkgconf libusb-1.0-0-dev"
 DEPS['bladerf']="git cmake pkgconf g++ libusb-1.0-0-dev"
 DEPS['hackrf']="git cmake pkgconf libusb-1.0-0-dev libfftw3-dev"
-DEPS['gnuradio']="git cmake pkgconf g++ $PYTHON_STEM $PYTHON_STEM-dev $PYTHON_STEM-mako $PYTHON_STEM-six libboost-dev libboost-thread-dev libboost-filesystem-dev libboost-program-options-dev libboost-random-dev libboost-test-dev libboost-math-dev libboost-date-time-dev libboost-system-dev libboost-regex-dev liblog4cpp5-dev libgmp-dev swig $PYTHON_STEM-yaml $PYTHON_STEM-gi $PYTHON_STEM-gi-cairo gir1.2-gtk-3.0 $PYTHON_STEM-numpy libgsl0-dev libfftw3-dev libqwt-qt5-dev qtbase5-dev python-pyqt5 pyqt5-dev-tools $PYTHON_STEM-click $PYTHON_STEM-click-plugins libzmq5-dev"
+DEPS['gnuradio']="git cmake pkgconf g++ $PYTHON_STEM $PYTHON_STEM-dev $PYTHON_STEM-six libboost-dev libboost-thread-dev libboost-filesystem-dev libboost-program-options-dev libboost-random-dev libboost-test-dev libboost-math-dev libboost-date-time-dev libboost-system-dev libboost-regex-dev liblog4cpp5-dev libgmp-dev swig $PYTHON_STEM-yaml $PYTHON_STEM-gi $PYTHON_STEM-gi-cairo gir1.2-gtk-3.0 $PYTHON_STEM-numpy libgsl0-dev libfftw3-dev libqwt-qt5-dev qtbase5-dev python-pyqt5 pyqt5-dev-tools $PYTHON_STEM-click $PYTHON_STEM-click-plugins libzmq5-dev"
+if [ "$PYTHON_STEM" == "python3" ] ; then
+    DEPS['gnuradio']="${DEPS[gnuradio]} $PYTHON_STEM-mako"
+else
+    DEPS['gnuradio']="${DEPS[gnuradio]} $PYTHON_STEM-cheetah"
+fi
 DEPS['pluto']="libad9361-dev libiio-dev bison flex"
 DEPS['gr-bokehgui']="$PYTHON_STEM-pip $PYTHON_STEM-jinja2 $PYTHON_STEM-dateutil $PYTHON_STEM-packaging $PYTHON_STEM-tornado $PYTHON_STEM-pil $PYTHON_STEM-pyparsing nodejs $PYTHON_STEM-pandas $PYTHON_STEM-psutil"
 CDEPS['gr-bokehgui']="$PIP install bokeh"
