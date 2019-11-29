@@ -194,10 +194,8 @@ fi
 # all possible steps: gnuradio uhd rtl-sdr gr-iqbal uhd-firmware fft-web gr-ofdm gr-bokehgui gr-osmosdr pluto bladerf hackrf xilinx-usb-driver xilinx digilent adp gr-cortexlab
 declare -A DEPS
 declare -A CDEPS
-DEPS['uhd']="git cmake pkgconf g++ $PYTHON_STEM $PYTHON_STEM-requests $PYTHON_STEM-numpy libboost-dev libboost-thread-dev libboost-filesystem-dev libboost-program-options-dev libboost-regex-dev libboost-test-dev libboost-math-dev"
-if [ "$PYTHON_STEM" == "python3" ] ; then
-    DEPS['uhd']="${DEPS[uhd]} $PYTHON_STEM-mako"
-else
+DEPS['uhd']="git cmake pkgconf g++ $PYTHON_STEM $PYTHON_STEM-mako $PYTHON_STEM-requests $PYTHON_STEM-numpy libboost-dev libboost-thread-dev libboost-filesystem-dev libboost-program-options-dev libboost-regex-dev libboost-test-dev libboost-math-dev"
+if [ "$PYTHON_STEM" == "python" ] ; then
     DEPS['uhd']="${DEPS[uhd]} $PYTHON_STEM-cheetah"
 fi
 DEPS['rtl-sdr']="git cmake pkgconf libusb-1.0-0-dev"
