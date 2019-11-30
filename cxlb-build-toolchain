@@ -206,6 +206,7 @@ else
 fi
 DEPS['pluto']="libad9361-dev libiio-dev bison flex"
 DEPS['gr-bokehgui']="$PYTHON_STEM-pip $PYTHON_STEM-jinja2 $PYTHON_STEM-dateutil $PYTHON_STEM-packaging $PYTHON_STEM-tornado $PYTHON_STEM-pil $PYTHON_STEM-pyparsing nodejs $PYTHON_STEM-pandas $PYTHON_STEM-psutil"
+DEPS['gr-bokehgui']="${DEPS[gr-bokehgui]} libcppunit-dev" # only for maint-3.7 branch, but can't know at this stage, so always install it
 CDEPS['gr-bokehgui']="$PIP install bokeh"
 
 # git refs to checkout
