@@ -244,6 +244,7 @@ if [ "${GITREFS[gr-bokehgui]}" == "maint-3.7" ] ; then
     DEPS['gr-bokehgui']="${DEPS[gr-bokehgui]} libcppunit-dev"
 fi
 CDEPS['gr-bokehgui']="$PIP install bokeh"
+DEPS['fft-web']="xalan"
 
 # The following global variable is used as a mean to return a result
 # (with shell convention 0 for True, !=0 for False) from a function
