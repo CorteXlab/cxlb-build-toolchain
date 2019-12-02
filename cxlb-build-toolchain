@@ -192,22 +192,6 @@ else
 fi
 
 # all possible steps: gnuradio uhd rtl-sdr gr-iqbal uhd-firmware fft-web gr-ofdm gr-bokehgui gr-osmosdr pluto bladerf hackrf xilinx-usb-driver xilinx digilent adp gr-cortexlab
-declare -A DEPS
-declare -A CDEPS
-DEPS['uhd']="git cmake pkgconf g++ $PYTHON_STEM $PYTHON_STEM-mako $PYTHON_STEM-requests $PYTHON_STEM-numpy libboost-dev libboost-thread-dev libboost-filesystem-dev libboost-program-options-dev libboost-regex-dev libboost-test-dev libboost-math-dev"
-DEPS['rtl-sdr']="git cmake pkgconf libusb-1.0-0-dev"
-DEPS['bladerf']="git cmake pkgconf g++ libusb-1.0-0-dev"
-DEPS['hackrf']="git cmake pkgconf libusb-1.0-0-dev libfftw3-dev"
-DEPS['gnuradio']="git cmake pkgconf g++ $PYTHON_STEM $PYTHON_STEM-dev $PYTHON_STEM-six libboost-dev libboost-thread-dev libboost-filesystem-dev libboost-program-options-dev libboost-random-dev libboost-test-dev libboost-math-dev libboost-date-time-dev libboost-system-dev libboost-regex-dev liblog4cpp5-dev libgmp-dev swig $PYTHON_STEM-yaml $PYTHON_STEM-gi $PYTHON_STEM-gi-cairo gir1.2-gtk-3.0 $PYTHON_STEM-numpy libgsl0-dev libfftw3-dev libqwt-qt5-dev qtbase5-dev python-pyqt5 pyqt5-dev-tools $PYTHON_STEM-click $PYTHON_STEM-click-plugins libzmq5-dev"
-if [ "$PYTHON_STEM" == "python3" ] ; then
-    DEPS['gnuradio']="${DEPS[gnuradio]} $PYTHON_STEM-mako"
-else
-    DEPS['gnuradio']="${DEPS[gnuradio]} $PYTHON_STEM-cheetah"
-fi
-DEPS['pluto']="libad9361-dev libiio-dev bison flex"
-DEPS['gr-bokehgui']="$PYTHON_STEM-pip $PYTHON_STEM-jinja2 $PYTHON_STEM-dateutil $PYTHON_STEM-packaging $PYTHON_STEM-tornado $PYTHON_STEM-pil $PYTHON_STEM-pyparsing nodejs $PYTHON_STEM-pandas $PYTHON_STEM-psutil"
-DEPS['gr-bokehgui']="${DEPS[gr-bokehgui]} libcppunit-dev" # only for maint-3.7 branch, but can't know at this stage, so always install it
-CDEPS['gr-bokehgui']="$PIP install bokeh"
 
 # git refs to checkout
 declare -A GITREFS
@@ -235,6 +219,31 @@ for STEPSPEC in "$STEPS" ; do
     REALSTEPS="$REALSTEPS $STEP"
 done
 STEPS="$REALSTEPS"
+
+# dependencies (DEPS = debian packages, CDEPS = custom dependencies)
+declare -A DEPS
+declare -A CDEPS
+DEPS['uhd']="git cmake pkgconf g++ $PYTHON_STEM $PYTHON_STEM-mako $PYTHON_STEM-requests $PYTHON_STEM-numpy libboost-dev libboost-thread-dev libboost-filesystem-dev libboost-program-options-dev libboost-regex-dev libboost-test-dev libboost-math-dev"
+DEPS['rtl-sdr']="git cmake pkgconf libusb-1.0-0-dev"
+DEPS['bladerf']="git cmake pkgconf g++ libusb-1.0-0-dev"
+DEPS['hackrf']="git cmake pkgconf libusb-1.0-0-dev libfftw3-dev"
+DEPS['gnuradio']="git cmake pkgconf g++ $PYTHON_STEM $PYTHON_STEM-dev $PYTHON_STEM-six libboost-dev libboost-thread-dev libboost-filesystem-dev libboost-program-options-dev libboost-random-dev libboost-test-dev libboost-math-dev libboost-date-time-dev libboost-system-dev libboost-regex-dev liblog4cpp5-dev libgmp-dev swig $PYTHON_STEM-yaml $PYTHON_STEM-gi $PYTHON_STEM-gi-cairo gir1.2-gtk-3.0 $PYTHON_STEM-numpy libgsl0-dev libfftw3-dev qtbase5-dev python-pyqt5 pyqt5-dev-tools $PYTHON_STEM-click $PYTHON_STEM-click-plugins libzmq5-dev"
+if [ "$PYTHON_STEM" == "python3" ] ; then
+    DEPS['gnuradio']="${DEPS[gnuradio]} $PYTHON_STEM-mako"
+else
+    DEPS['gnuradio']="${DEPS[gnuradio]} $PYTHON_STEM-cheetah"
+fi
+if [ "${GITREFS[gnuradio]}" == "maint-3.7" ] ; then
+    DEPS['gnuradio']="${DEPS[gnuradio]} libqwt5-qt4-dev python-wxgtk3.0 libqt4-dev qt4-dev-tools pyqt4-dev-tools python-qwt5-qt4 libqwtplot3d-qt5-dev python-lxml gtk2-engines-pixbuf python-gtk2 libsdl1.2-dev libusb-dev libcppunit-dev"
+else
+    DEPS['gnuradio']="${DEPS[gnuradio]} libqwt-qt5-dev"
+fi
+DEPS['pluto']="libad9361-dev libiio-dev bison flex"
+DEPS['gr-bokehgui']="$PYTHON_STEM-pip $PYTHON_STEM-jinja2 $PYTHON_STEM-dateutil $PYTHON_STEM-packaging $PYTHON_STEM-tornado $PYTHON_STEM-pil $PYTHON_STEM-pyparsing nodejs $PYTHON_STEM-pandas $PYTHON_STEM-psutil"
+if [ "${GITREFS[gr-bokehgui]}" == "maint-3.7" ] ; then
+    DEPS['gr-bokehgui']="${DEPS[gr-bokehgui]} libcppunit-dev"
+fi
+CDEPS['gr-bokehgui']="$PIP install bokeh"
 
 # The following global variable is used as a mean to return a result
 # (with shell convention 0 for True, !=0 for False) from a function
