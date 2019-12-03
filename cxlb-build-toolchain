@@ -234,7 +234,7 @@ else
     DEPS['gnuradio']="${DEPS[gnuradio]} $PYTHON_STEM-cheetah"
 fi
 if [ "${GITREFS[gnuradio]}" == "maint-3.7" ] ; then
-    DEPS['gnuradio']="${DEPS[gnuradio]} libqwt5-qt4-dev python-wxgtk3.0 libqt4-dev qt4-dev-tools pyqt4-dev-tools python-qwt5-qt4 libqwtplot3d-qt5-dev python-lxml gtk2-engines-pixbuf python-gtk2 libsdl1.2-dev libusb-1.0-0-dev libcppunit-dev"
+    DEPS['gnuradio']="${DEPS[gnuradio]} libqwt5-qt4-dev python-wxgtk3.0 libqt4-dev qt4-dev-tools pyqt4-dev-tools python-qwt5-qt4 libqwtplot3d-qt5-dev python-lxml gtk2-engines-pixbuf python-gtk2 libusb-1.0-0-dev libcppunit-dev"
 else
     DEPS['gnuradio']="${DEPS[gnuradio]} libqwt-qt5-dev"
 fi
