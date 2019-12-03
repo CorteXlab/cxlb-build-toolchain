@@ -227,7 +227,7 @@ DEPS['uhd']="git cmake pkgconf g++ $PYTHON_STEM $PYTHON_STEM-mako $PYTHON_STEM-r
 DEPS['rtl-sdr']="git cmake pkgconf libusb-1.0-0-dev"
 DEPS['bladerf']="git cmake pkgconf g++ libusb-1.0-0-dev"
 DEPS['hackrf']="git cmake pkgconf libusb-1.0-0-dev libfftw3-dev"
-DEPS['gnuradio']="git cmake pkgconf g++ $PYTHON_STEM $PYTHON_STEM-dev $PYTHON_STEM-six libboost-dev libboost-thread-dev libboost-filesystem-dev libboost-program-options-dev libboost-random-dev libboost-test-dev libboost-math-dev libboost-date-time-dev libboost-system-dev libboost-regex-dev liblog4cpp5-dev libgmp-dev swig $PYTHON_STEM-yaml $PYTHON_STEM-gi $PYTHON_STEM-gi-cairo gir1.2-gtk-3.0 $PYTHON_STEM-numpy libgsl0-dev libfftw3-dev qtbase5-dev python-pyqt5 pyqt5-dev-tools $PYTHON_STEM-click $PYTHON_STEM-click-plugins libzmq5-dev"
+DEPS['gnuradio']="git cmake pkgconf g++ $PYTHON_STEM $PYTHON_STEM-dev $PYTHON_STEM-six libboost-dev libboost-thread-dev libboost-filesystem-dev libboost-program-options-dev libboost-random-dev libboost-test-dev libboost-math-dev libboost-date-time-dev libboost-system-dev libboost-regex-dev liblog4cpp5-dev libgmp-dev swig $PYTHON_STEM-yaml $PYTHON_STEM-gi $PYTHON_STEM-gi-cairo gir1.2-gtk-3.0 $PYTHON_STEM-numpy libgsl0-dev libfftw3-dev qtbase5-dev python-pyqt5 pyqt5-dev-tools $PYTHON_STEM-click $PYTHON_STEM-click-plugins libzmq5-dev $PYTHON_STEM-zmq"
 if [ "$PYTHON_STEM" == "python3" ] ; then
     DEPS['gnuradio']="${DEPS[gnuradio]} $PYTHON_STEM-mako"
 else
