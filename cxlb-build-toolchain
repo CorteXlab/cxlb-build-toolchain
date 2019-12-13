@@ -210,7 +210,7 @@ GITREFS['xilinx-usb-driver']=master
 GITREFS['gr-cortexlab']=master
 
 REALSTEPS=""
-for STEPSPEC in "$STEPS" ; do
+for STEPSPEC in $STEPS ; do
     STEP=$(echo "$STEPSPEC" | sed 's/=.*//')
     GITREF=$(echo "$STEPSPEC" | sed -n 's/[^=]*=//p')
     if [ "$GITREF" != "" ] ; then
