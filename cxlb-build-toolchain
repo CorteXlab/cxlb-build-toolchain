@@ -243,7 +243,7 @@ DEPS['gr-bokehgui']="$PYTHON_STEM-pip $PYTHON_STEM-jinja2 $PYTHON_STEM-dateutil 
 if [ "${GITREFS[gr-bokehgui]}" == "maint-3.7" ] ; then
     DEPS['gr-bokehgui']="${DEPS[gr-bokehgui]} libcppunit-dev"
 fi
-CDEPS['gr-bokehgui']="$PIP install bokeh"
+CDEPS['gr-bokehgui']="$PIP install bokeh==1.4.0"
 DEPS['fft-web']="xalan"
 
 # The following global variable is used as a mean to return a result
