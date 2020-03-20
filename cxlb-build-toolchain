@@ -583,6 +583,14 @@ fi
 git_step "gnuradio" "https://github.com/gnuradio/gnuradio.git"
 if [ "$DO_P" == 0 ] ; then
     sed -i -e 's/BokehLayout/bokeh_layout/' gnuradio.git/grc/core/generator/flow_graph.py.mako || true
+    ### to be removed when patch from Cyrille is applied in branch maint-3.8
+    if [ "${GITREFS[gnuradio]}" == "maint-3.8" ] ; then
+        pushd gnuradio.git
+        git fetch origin master
+        git cherry-pick 218d2c2029a8c4557906bbe55a56292f568f0910
+        popd
+    fi
+    ###
     cmake_build gnuradio.git/build
     if [ "$BUILD_SPHINX_DOC" == "0" ] ; then
         rm -rf gnuradio.git/docs/sphinx/hieroglyph  # TODO: add hieroglyph dependency
