@@ -223,7 +223,10 @@ STEPS="$REALSTEPS"
 # dependencies (DEPS = debian packages, CDEPS = custom dependencies)
 declare -A DEPS
 declare -A CDEPS
-DEPS['uhd']="git cmake pkgconf g++ $PYTHON_STEM $PYTHON_STEM-mako $PYTHON_STEM-requests $PYTHON_STEM-numpy libboost-dev libboost-thread-dev libboost-filesystem-dev libboost-program-options-dev libboost-regex-dev libboost-test-dev libboost-math-dev libusb-1.0-0-dev $PYTHON_STEM-distutils"
+DEPS['uhd']="git cmake pkgconf g++ $PYTHON_STEM $PYTHON_STEM-mako $PYTHON_STEM-requests $PYTHON_STEM-numpy libboost-dev libboost-thread-dev libboost-filesystem-dev libboost-program-options-dev libboost-regex-dev libboost-test-dev libboost-math-dev libusb-1.0-0-dev"
+if [ "$PYTHON_STEM" == "python3" ] ; then
+    DEPS['uhd']="${DEPS[uhd]} $PYTHON_STEM-distutils"
+fi
 DEPS['rtl-sdr']="git cmake pkgconf libusb-1.0-0-dev"
 DEPS['bladerf']="git cmake pkgconf g++ libusb-1.0-0-dev"
 DEPS['hackrf']="git cmake pkgconf libusb-1.0-0-dev libfftw3-dev"
