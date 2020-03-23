@@ -543,6 +543,9 @@ cd $SOURCES_DIR
 git_step "uhd" "git://github.com/EttusResearch/uhd.git"
 if [ "$DO_P" == 0 ] ; then
     cmake_build uhd.git/host/build
+    if [ "$PYTHON_STEM" != "python3" ] ; then
+        sed -i -e 's/from urllib.parse import urljoin  # Python 3/from urlparse import urljoin  # Python 2/' $INSTALL_DIR/lib/uhd/utils/uhd_images_downloader.py || true
+    fi
 fi
 
 # ------------------------------------------------------------------------
