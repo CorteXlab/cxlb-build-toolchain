@@ -618,7 +618,7 @@ fi
 # install des dépendances
 git_step "gr-bokehgui" "https://github.com/mimbert/gr-bokehgui.git"
 if [ "$DO_P" == 0 ] ; then
-    cmake_build gr-bokehgui.git/build
+    cmake_build gr-bokehgui.git/build -DENABLE_DOXYGEN=OFF
 fi
 
 # ------------------------------------------------------------------------
