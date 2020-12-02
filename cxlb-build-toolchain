@@ -947,6 +947,12 @@ ldconfig
 #
 #     (need to logout / login to activate this)
 
+# - uhd
+
+if [ -f "$INSTALL_DIR/etc/udev/rules.d/uhd-usrp.rules" ] ; then
+  cp "$INSTALL_DIR/etc/udev/rules.d/uhd-usrp.rules" "/etc/udev/rules.d/rtl-sdr.rules"
+fi
+
 # - rtl-sdr:
 
 if [ -f "$INSTALL_DIR/etc/udev/rules.d/rtl-sdr.rules" ] ; then
