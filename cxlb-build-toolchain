@@ -12,7 +12,7 @@ usage() {
 
   parameters:
 
-    <compile_dir> : where to download / comile gnuradio and other
+    <compile_dir> : where to download / compile gnuradio and other
                     packages
     <install_dir> : where to install gnuradio and other packages
 
