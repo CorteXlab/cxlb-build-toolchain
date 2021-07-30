@@ -527,7 +527,7 @@ if [ "$BUNDLEOUT" != "" ] ; then
     echo "# $BUILDTITLE" >> "$BUNDLEOUT"
 fi
 
-export TC_PYTHONPATH="$INSTALL_DIR/"$("$PYTHON_EXECUTABLE" -c "import sys,os; print(os.sep.join(['lib', 'python' + sys.version[:3], 'dist-packages']))")
+export TC_PYTHONPATH="$INSTALL_DIR/"$("$PYTHON_EXECUTABLE" -c "import sys,os; print(os.sep.join(['lib', 'python' + (sys.version[:3] if sys.version_info.major < 3 else str(sys.version_info.major)), 'dist-packages']))")
 SET_TOOLCHAIN_ENV=$(cat <<EOF
 export PYTHONPATH="$TC_PYTHONPATH\${PYTHONPATH:+:\${PYTHONPATH}}"
 export LD_LIBRARY_PATH="$INSTALL_DIR/lib\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}"
