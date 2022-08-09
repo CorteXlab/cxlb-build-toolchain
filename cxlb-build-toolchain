@@ -250,7 +250,7 @@ fi
 if [[ "${GITREFS[gnuradio]}" == "maint-3.7" || "${GITREFS[gnuradio]}" == "maint-3.8" ]] ; then
     DEPS['gnuradio']="${DEPS[gnuradio]} swig"
 else
-    DEPS['gnuradio']="${DEPS[gnuradio]} python3-pybind11 python3-pygccxml libsndfile1-dev"
+    DEPS['gnuradio']="${DEPS[gnuradio]} python3-pybind11 python3-pygccxml libsndfile1-dev $PYTHON_STEM-jsonschema"
 fi
 DEPS['pluto']="libad9361-dev libiio-dev bison flex"
 DEPS['gr-bokehgui']="$PYTHON_STEM-pip $PYTHON_STEM-jinja2 $PYTHON_STEM-dateutil $PYTHON_STEM-packaging $PYTHON_STEM-tornado $PYTHON_STEM-pil $PYTHON_STEM-pyparsing nodejs $PYTHON_STEM-pandas $PYTHON_STEM-psutil net-tools"
