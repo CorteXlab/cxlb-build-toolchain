@@ -531,7 +531,7 @@ if [ "$BUNDLEOUT" != "" ] ; then
     echo "# $BUILDTITLE" >> "$BUNDLEOUT"
 fi
 
-export TC_PYTHONPATH="$INSTALL_DIR/"$("$PYTHON_EXECUTABLE" -c "import sys,os; print(os.sep.join(['lib', 'python' + (sys.version[:3] if sys.version_info.major < 3 else str(sys.version_info.major)), 'dist-packages']))")
+export TC_PYTHONPATH=$("$PYTHON_EXECUTABLE" -c "import sysconfig ; print(sysconfig.get_path('platlib', scheme='posix_prefix', vars={'base': '$INSTALL_DIR', 'platbase': '$INSTALL_DIR'}))")
 SET_TOOLCHAIN_ENV=$(cat <<EOF
 export PYTHONPATH="$TC_PYTHONPATH\${PYTHONPATH:+:\${PYTHONPATH}}"
 export LD_LIBRARY_PATH="$INSTALL_DIR/lib\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}"
