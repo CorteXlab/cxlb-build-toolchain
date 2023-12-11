@@ -653,8 +653,8 @@ fi
 
 # ------------------------------------------------------------------------
 # gr-iqbal
-# http://git.osmocom.org/gr-iqbal
-git_step "gr-iqbal" "https://github.com/osmocom/gr-iqbal.git"
+# https://gitea.osmocom.org/sdr/gr-iqbal.git
+git_step "gr-iqbal" "https://gitea.osmocom.org/sdr/gr-iqbal.git"
 if [ "$DO_P" == 0 ] ; then
     pushd gr-iqbal.git
     git submodule init
